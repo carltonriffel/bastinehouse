@@ -844,13 +844,14 @@ function genPorch(){
   const spans = posts.slice(1).map((p,i)=>p-posts[i]);
   const beam = sizePorchBeam(Math.max(...spans), W_TL, W_LL);
   const bd = BEAM_D[beam.size]*IN, bt=porchSeat(yB), bb=bt-bd;
-  for(let k=0;k<spans.length;k++){ const a=k===0?x0:posts[k], b=k===spans.length-1?x1:posts[k+1], len=b-a;
+  const midK=1;                                                       // entry bay under the vaulted gable: open, no beam
+  for(let k=0;k<spans.length;k++){ if(k===midK) continue; let a=k===0?x0:posts[k], b=k===spans.length-1?x1:posts[k+1]; if(k===midK-1) b+=0.5; if(k===midK+1) a-=0.5; const len=b-a;
     for(let i=0;i<beam.plies;i++) add({layer,lvl,cat:'Beam',sku:'SYP-'+beam.size,mode:'piece',len,label:`Porch beam · (${beam.plies}) ${beam.size} #2 SYP, spliced over posts`,color:COL.header,
       g:{t:'box',c:[(a+b)/2,yB+(i-(beam.plies-1)/2)*1.5*IN,(bt+bb)/2],s:[len-0.01,1.5*IN,bd]}}); }
   STATS.porchBeam={...beam, spans, trib, W_TL, W_LL, checks:spans.map(L=>beamCheck(beam.size,beam.plies,L,W_TL,W_LL))};
   for(const X of posts) add({layer,lvl,cat:'Posts',sku:'PT-6x6',mode:'piece',len:bb,label:'Porch post 6x6 PT',color:COL.post,g:{t:'box',c:[X,yB,bb/2],s:[5.5*IN,5.5*IN,bb]}});
   STATS.porchSpans = spans;
-  add({layer,lvl,cat:'Fascia',sku:'SYP-2x6',mode:'lf',len:x1-x0+1,label:'Sub-fascia (porch eave)',color:COL.rafter,g:{t:'box',c:[WD/2,yE,porchSeat(yE)+0.2],s:[x1-x0+1,1.5*IN,5.5*IN]}});
+  for(const [fa,fb] of [[x0-0.5,gXc-gHW],[gXc+gHW,x1+0.5]]) add({layer,lvl,cat:'Fascia',sku:'SYP-2x6',mode:'lf',len:fb-fa,label:'Sub-fascia (porch eave, stops at the entry gable)',color:COL.rafter,g:{t:'box',c:[(fa+fb)/2,yE,porchSeat(yE)+0.2],s:[fb-fa,1.5*IN,5.5*IN]}});
   genEntryGable(layer,lvl,yE,posts);
   STATS.porchArea = (x1-x0+1)*9*Math.hypot(1,SHED_P);
   STATS.ledgerLF = (STATS.ledgerLF||0)+(x1-x0); STATS.posts=(STATS.posts||0)+posts.length;
@@ -872,39 +873,30 @@ function genEntryGable(layer,lvl,yE,posts){
   // Simple stick framing on top of the porch sheathing: 2x8 valley plates laid flat, level 2x6 ridge board,
   // 2x6 rafters @ 16" from the ridge down to the valley plates, and a 2x6 rafter pair + studs at the front gable.
   const R6=plumb(5.5/12,GP), plane = x => zR - x*GP - 0.04;          // underside of the gable sheathing at x from the ridge
-  const yG = yE-0.0625-0.75*IN, yB=-7.75;                          // gable end hangs on the sub-fascia face; porch beam line
+  const yG = yE+0.75*IN-0.0625, yB=-7.75;                            // front rafter pair flush with the porch fascia face; porch beam line
   // VAULTED: no porch rafters or sheathing inside the valleys. Doubled 2x8 valley rafters run from the front corners over the porch beam to the house ledger,
   // a (2) 2x8 ridge beam is carried by a king post on the porch beam and a hanger at the house wall, and 2x6 jack rafters run ridge to valley rafter.
   const RB=7.25*IN, ridgeTop=plane(1.5*IN), ridgeBot=ridgeTop-RB, ridgeLen=yStop-(yG-0.75*IN);
-  for(const k of [-1,1]) add({layer,lvl,cat:'Rafters',sku:'SYP-2x8',mode:'piece',len:ridgeLen,label:`${tag} · ridge beam (2) 2x8 (king post on porch beam + hanger at wall)`,color:COL.header,
+  for(const k of [-1,1]) add({layer,lvl,cat:'Rafters',sku:'SYP-2x8',mode:'piece',len:ridgeLen,label:`${tag} · ridge beam (2) 2x8 (house-wall hanger to the front rafter pair)`,color:COL.header,
        g:{t:'box',c:[Xc+k*0.75*IN,(yG-0.75*IN+yStop)/2,ridgeTop-RB/2],s:[1.5*IN,ridgeLen,RB]}});
-  { const bt=porchSeat(yB), h=ridgeBot-bt; for(const k of [-1,1]) add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'lf',len:h,label:`${tag} · king post (2) 2x6 on the porch beam under the ridge`,color:COL.short,g:{t:'box',c:[Xc+k*0.75*IN,yB,bt+h/2],s:[1.5*IN,5.5*IN,h]}}); }
   const vTop=y=>deck(y)-0.04, VD=plumb(7.25/12,SHED_P*0.8);
-  for(const sd of [-1,1]){ const A=[Xc+sd*HW,yE+0.06,vTop(yE)-VD/2], B=[Xc+sd*hw(yStop),yStop,vTop(yStop)-VD/2];
-    add({layer,lvl,cat:'Rafters',sku:'SYP-2x8',mode:'piece',len:stickLen(A,B)*2,label:`${tag} · valley rafter (2) 2x8 (front corner → porch beam → house ledger)`,color:COL.header,g:{t:'stick',a:A,b:B,w:3*IN,d:7.25*IN}}); }
+  for(const sd of [-1,1]){ const A=[Xc+sd*HW,yE+3*IN,vTop(yE)-VD/2], B=[Xc+sd*hw(yStop),yStop,vTop(yStop)-VD/2];
+    add({layer,lvl,cat:'Rafters',sku:'SYP-2x8',mode:'piece',len:stickLen(A,B)*2,label:`${tag} · valley rafter (2) 2x8 (front corner → porch beam end at the step post → house ledger)`,color:COL.header,g:{t:'stick',a:A,b:B,w:3*IN,d:7.25*IN}}); }
   let nR=0;
   for(let y=yE+16*IN; y<yStop-0.2; y+=16*IN){ const xv=hw(y)-0.14; if(xv-1.5*IN<0.3) continue;
     for(const sd of [-1,1]){ const A=[Xc+sd*1.5*IN,y,plane(1.5*IN)-R6/2], B=[Xc+sd*xv,y,plane(xv)-R6/2];
       add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(A,B)+0.3,label:`${tag} · 2x6 jack rafter @ 16" (ridge beam to valley rafter)`,color:COL.rafter,g:{t:'stick',a:A,b:B,w:1.5*IN,d:5.5*IN}}); nR++; } }
-  // front gable end: 2x6 rafter pair + 2x4 bottom plate + 2x4 studs @ 16", hung on the sub-fascia face so its eaves line up with the porch fascia bottom (A-4)
-  const zFt = plane(HW)-R6;                                          // rafter-foot bottom = porch fascia bottom
-  add({layer,lvl,cat:'Rafters',sku:'SYP-2x4',mode:'lf',len:2*HW,label:`${tag} · 2x4 gable bottom plate (nailed to the sub-fascia)`,color:COL.short,g:{t:'box',c:[Xc,yG,zFt+0.75*IN],s:[2*HW,1.5*IN,1.5*IN]}});
-  for(const sd of [-1,1]){ const A=[Xc+sd*HW,yG,plane(HW)-R6/2], B=[Xc+sd*0.0625,yG,plane(0.0625)-R6/2];
-    add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(A,B),label:`${tag} · 2x6 front gable rafter`,color:COL.rafter,g:{t:'stick',a:A,b:B,w:1.5*IN,d:5.5*IN}}); nR++; }
-  for(let dx=-HW+16*IN; dx<HW-0.3; dx+=16*IN){ if(Math.abs(dx)<0.1) continue; const top=plane(Math.abs(dx))-R6, z0=zFt+1.5*IN, len=top-z0; if(len<0.2) continue;
-    add({layer,lvl,cat:'Rafters',sku:'SYP-2x4',mode:'lf',len,label:`${tag} · 2x4 gable stud @ 16"`,color:COL.short,g:{t:'box',c:[Xc+dx,yG,z0+len/2],s:[1.5*IN,1.5*IN,len]}}); }
-  { const top=ridgeBot, z0=zFt+1.5*IN; add({layer,lvl,cat:'Rafters',sku:'SYP-2x4',mode:'lf',len:top-z0,label:`${tag} · 2x4 gable center stud (under ridge)`,color:COL.short,g:{t:'box',c:[Xc,yG,(top+z0)/2],s:[3.5*IN,1.5*IN,top-z0]}}); }
+  // open front: doubled 2x6 front rafter pair flush with the porch fascia, feet on the valley-rafter tails (strapped), no plate, studs or sub-fascia across the opening
+  for(const sd of [-1,1]) for(const ply of [0,1]){ const yy=yG+ply*1.5*IN, A=[Xc+sd*HW,yy,plane(HW)-R6/2], B=[Xc+sd*1.5*IN,yy,plane(1.5*IN)-R6/2];
+    add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(A,B),label:`${tag} · front rafter (2) 2x6, flush with the porch fascia`,color:COL.rafter,g:{t:'stick',a:A,b:B,w:1.5*IN,d:5.5*IN}}); if(ply===0) nR++; }
   STATS.entryRafters=nR;
   if(atWall){ // ridge and valleys die into the house wall: 2x6 nailers on the wall follow the gable profile
     const hW=hw(yWall), zb=deck(yWall)+1.5*IN;
     for(const sd of [-1,1]){ const A=[Xc+sd*(hW+0.05),yWall+0.07,zb+0.12], B=[Xc+sd*0.06,yWall+0.07,plane(0.06)-R6/2];
       add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(A,B),label:`${tag} · 2x6 wall nailer where the gable meets the house`,color:COL.rafter,g:{t:'stick',a:A,b:B,w:1.5*IN,d:5.5*IN}}); } }
-  // gable face sheathing (OSB) and roof deck (two triangles per side)
-  const fA=0.5*2*HW*(zR-(plane(HW)-R6));
-  add({layer:'rsheath',lvl:1.1,cat:'Roof deck',sku:'OSB-716',mode:'area',area:fA,label:`${tag} · gable face 7/16" OSB (${num(fA,1)} sf)`,color:COL.osb,
-       g:{t:'tri',pts:[[Xc-HW,yG-0.08,plane(HW)-R6],[Xc+HW,yG-0.08,plane(HW)-R6],[Xc,yG-0.08,zR-0.02]]}});
+  // roof deck (two triangles per side); the gable front is open, so no gable-face sheathing
   const triA=(A,B,C)=>{ const u=[B[0]-A[0],B[1]-A[1],B[2]-A[2]], v=[C[0]-A[0],C[1]-A[1],C[2]-A[2]]; return 0.5*Math.hypot(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]); };
-  for(const sd of [-1,1]){ const P1=[Xc,yG-0.15,zR+0.01], P2=[Xc+sd*(HW+0.17),yG-0.15,zE-0.17*GP+0.01];
+  for(const sd of [-1,1]){ const P1=[Xc,yE-0.12,zR+0.01], P2=[Xc+sd*(HW+0.17),yE-0.12,zE-0.17*GP+0.01];
     const tris = atWall ? [[P1,P2,[Xc+sd*hw(yStop),yStop,deck(yStop)+1.5*IN+0.01]],[P1,[Xc+sd*hw(yStop),yStop,deck(yStop)+1.5*IN+0.01],[Xc,yStop,zR+0.01]]] : [[P1,P2,[Xc,yEnd,zR+0.01]]];
     tris.forEach((t,k)=>{ const area=triA(...t); add({layer:'rsheath',lvl:1.1,cat:'Roof deck',sku:'RSH-716',mode:'area',area,label:`${tag} · roof deck ${sd<0?'left':'right'}${tris.length>1?' '+(k+1):''} (${num(area,1)} sf)`,color:COL.roof,g:{t:'tri',pts:t}}); }); }
 }
@@ -1267,7 +1259,8 @@ function buildChecks(){
     push('Spans',pbm.ok?'ok':'warn',`Porch beam · (${pbm.plies}) ${pbm.size} #2 SYP`,`Sized for the longest bay with ${ftin(pbm.trib)} of roof on it (${PORCH_DL} psf dead + ${PORCH_LL} psf roof live = ${num(pbm.W_TL)} plf). Bays ${pbm.spans.map(ftin).join(' · ')}. Worst bay ${ftin(worst.Lft)}: bending ${num(worst.fb)} of ${num(worst.Fb)} psi, shear ${num(worst.fv)} of ${num(worst.Fv)} psi, deflection L/${num(Math.min(worst.rLL,9999))} live, L/${num(Math.min(worst.rTL,9999))} total.`);
     const four = state.porchPosts!==5; const alt = sizePorchBeam(four?Math.max(...pbm.spans.filter(x=>x!==Math.max(...pbm.spans)), Math.max(...pbm.spans)/2):0, pbm.W_TL, pbm.W_LL);
     if(four) push('Spans','info','Smaller porch beam option',`(2) 2x6 and (2) 2x8 work for the 6'-0" and 6'-9" bays but not the ${ftin(Math.max(...pbm.spans))} bay. Adding one post mid-bay (Framing options → Porch posts) drops the whole beam to (${alt.plies}) ${alt.size}.`); }
-  if(STATS.entry){ const e=STATS.entry; push('Spans','ok','Entry gable over the steps',`8/12 gable, ${ftin(2*e.HW)} wide between the step posts (widened from 4'-0" on A-4). Ridge is level, ${ftin(e.zR-e.zE)} above the porch eave, ${e.atWall?`and runs into the house wall ${ftin(e.wallRise)} above the porch roof (valleys ${ftin(2*e.wallHW)} apart at the wall), so 2x6 nailers on the wall pick up the sheathing and step flashing is needed there`:`and dies into the 2/12 porch roof ${ftin(-e.yEnd)} from the wall`}. Vaulted inside: the porch rafters stop at doubled 2x8 valley rafters (${STATS.porchJacks} porch jacks) that run from the gable's front corners over the porch beam to the house ledger; a (2) 2x8 ridge beam sits on a (2) 2x6 king post on the porch beam and hangs from the house wall; ${STATS.entryRafters} 2x6 jack rafters @ 16" run ridge to valley. The gable end (2x6 rafter pair, 2x4 bottom plate and studs) hangs on the sub-fascia so its eaves line up with the porch fascia as on A-4. With no ties across the vault, the ridge beam carries the roof (about ${ftin(7.75)} from the beam to the wall, lightly loaded).`); }
+  if(STATS.entry) push('Spans','warn','Open vaulted entry gable: confirm with an engineer',`With nothing tying across the vault, the front rafter pair pushes out at its feet and the ridge beam carries the roof (about ${ftin(9)} from the house wall to the front rafters). The model strengthens what it can: doubled front rafters, a (2) 2x8 ridge beam, doubled valley rafters bearing on the beam ends at the step posts. Strap each front rafter foot to its valley-rafter tail and to the porch sub-fascia (e.g. Simpson MSTA24), hang the ridge and valleys at the wall with skewable hangers, and have the truss/LVL supplier or an engineer confirm the ridge and valley sizes and the outward thrust before ordering.`);
+  if(STATS.entry){ const e=STATS.entry; push('Spans','ok','Entry gable over the steps',`8/12 gable, ${ftin(2*e.HW)} wide between the step posts (widened from 4'-0" on A-4). Ridge is level, ${ftin(e.zR-e.zE)} above the porch eave, ${e.atWall?`and runs into the house wall ${ftin(e.wallRise)} above the porch roof (valleys ${ftin(2*e.wallHW)} apart at the wall), so 2x6 nailers on the wall pick up the sheathing and step flashing is needed there`:`and dies into the 2/12 porch roof ${ftin(-e.yEnd)} from the wall`}. Vaulted and open at the front: the porch beam is left out of the entry bay, and the porch rafters stop at doubled 2x8 valley rafters (${STATS.porchJacks} porch jacks) that run from the gable's front corners over the beam ends at the step posts (the side bays' beams cantilever 6" past the posts to catch them) to the house ledger. A (2) 2x8 ridge beam hangs from the house wall and lands on a doubled 2x6 front rafter pair set flush with the porch fascia; ${STATS.entryRafters} 2x6 rafters @ 16" in all. No plate, studs or sub-fascia cross the opening, so the vault runs out to the fascia.`); }
   push('Spans','ok','Shed & porch rafters 2x6 #2 SYP @ 24"',`Rear shed (3/12) spans ${ftin(BK-DP)}; front porch (2/12) spans 8'-0"; both under the ~13'-0" allowable (20 psf live, 10 dead). Bedroom ceiling joists 2x6 @ 16" span ${ftin(BK-DP)} (no attic storage).`);
   { const ledgerTop=SHED_SEAT+plumb(5.5/12,REAR_P)+0.04, sill=Math.min(...(wallById('U1').openings||[]).map(o=>o.sill??99));
     push('Heights & roof geometry', sill-ledgerTop>=0.67?'ok':'warn','Rear shed meets the main wall',`At 3/12 the shed roof reaches ${ftin(ledgerTop)} at the main rear wall, above the 2nd floor deck (${ftin(SUB2)}), so the ledger fastens to the loft wall studs with structural screws and solid blocking. Loft window sills are at ${ftin(sill)}, leaving ${ftin(sill-ledgerTop)} for step flashing and siding.`); }
