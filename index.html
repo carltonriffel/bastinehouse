@@ -195,7 +195,7 @@ tfoot td{font-weight:600;border-bottom:0}
       </div>
     </div>
     <div class="kpis">
-      <div class="pdfbox"><button class="btn pri" id="b-pdf" title="Plans, window & door schedule, material list, structural schedules">Export PDF set</button><span id="pdf-msg" role="status" aria-live="polite"></span></div>
+      <div class="pdfbox"><div style="display:flex;gap:6px"><button class="btn" id="b-ar" title="Open the 3D framing model in AR on iPhone/iPad (AR Quick Look), or download it as USDZ">View in AR</button><button class="btn pri" id="b-pdf" title="Plans, window & door schedule, material list, structural schedules">Export PDF set</button></div><span id="pdf-msg" role="status" aria-live="polite"></span></div>
       <div class="kpi"><span>Material</span><b id="k-mat">–</b></div>
       <div class="kpi"><span>Lumber</span><b id="k-bf">–</b></div>
       <div class="kpi"><span>Per sq ft</span><b id="k-psf">–</b></div>
@@ -1256,9 +1256,9 @@ function buildChecks(){
   { const pb=STATS.patioBeam, c=pb.check, one=state.patioPosts!==2;
     push('Spans',pb.ok?'ok':'warn',`Patio beam · (2) ${pb.size} #2 SYP`,`${ftin(pb.trib)} of 3/12 shed roof on it (${num(pb.W_TL)} plf). Span${pb.spans.length>1?'s':''} ${pb.spans.map(ftin).join(' · ')}: bending ${num(c.fb)} of ${num(c.Fb)} psi, shear ${num(c.fv)} of ${num(c.Fv)} psi, deflection L/${num(Math.min(c.rLL,9999))} live, L/${num(Math.min(c.rTL,9999))} total.${pb.ok?'':` No double-ply 2x member works on this span: use (3) ${pb.alt3.size} or add a mid post, which allows (2) ${pb.altPost.size}.`}`); }
   { const pbm=STATS.porchBeam, worst=pbm.checks.reduce((a,c)=>c.Lft>a.Lft?c:a);
-    push('Spans',pbm.ok?'ok':'warn',`Porch beam · (${pbm.plies}) ${pbm.size} #2 SYP`,`Sized for the longest bay with ${ftin(pbm.trib)} of roof on it (${PORCH_DL} psf dead + ${PORCH_LL} psf roof live = ${num(pbm.W_TL)} plf). Bays ${pbm.spans.map(ftin).join(' · ')}. Worst bay ${ftin(worst.Lft)}: bending ${num(worst.fb)} of ${num(worst.Fb)} psi, shear ${num(worst.fv)} of ${num(worst.Fv)} psi, deflection L/${num(Math.min(worst.rLL,9999))} live, L/${num(Math.min(worst.rTL,9999))} total.`);
+    push('Spans',pbm.ok?'ok':'warn',`Porch beam · (${pbm.plies}) ${pbm.size} #2 SYP`,`Sized for the longest bay with ${ftin(pbm.trib)} of roof on it (${PORCH_DL} psf dead + ${PORCH_LL} psf roof live = ${num(pbm.W_TL)} plf). Bays ${pbm.spans.map((L,i)=>i===1?`${ftin(L)} entry bay (open, no beam: the vaulted gable's valley rafters bear on the side beams, which run 6" past the step posts)`:ftin(L)).join(' · ')}. Worst bay ${ftin(worst.Lft)}: bending ${num(worst.fb)} of ${num(worst.Fb)} psi, shear ${num(worst.fv)} of ${num(worst.Fv)} psi, deflection L/${num(Math.min(worst.rLL,9999))} live, L/${num(Math.min(worst.rTL,9999))} total.`);
     const four = state.porchPosts!==5; const alt = sizePorchBeam(four?Math.max(...pbm.spans.filter(x=>x!==Math.max(...pbm.spans)), Math.max(...pbm.spans)/2):0, pbm.W_TL, pbm.W_LL);
-    if(four) push('Spans','info','Smaller porch beam option',`(2) 2x6 and (2) 2x8 work for the 6'-0" and 6'-9" bays but not the ${ftin(Math.max(...pbm.spans))} bay. Adding one post mid-bay (Framing options → Porch posts) drops the whole beam to (${alt.plies}) ${alt.size}.`); }
+    if(four) push('Spans','info','Smaller porch beam option',`(2) 2x6 and (2) 2x8 work for the 6'-9" bay but not the ${ftin(Math.max(...pbm.spans))} bay. Adding one post mid-bay (Framing options → Porch posts) drops the whole beam to (${alt.plies}) ${alt.size}.`); }
   if(STATS.entry) push('Spans','warn','Open vaulted entry gable: confirm with an engineer',`With nothing tying across the vault, the front rafter pair pushes out at its feet and the ridge beam carries the roof (about ${ftin(9)} from the house wall to the front rafters). The model strengthens what it can: doubled front rafters, a (2) 2x8 ridge beam, doubled valley rafters bearing on the beam ends at the step posts. Strap each front rafter foot to its valley-rafter tail and to the porch sub-fascia (e.g. Simpson MSTA24), hang the ridge and valleys at the wall with skewable hangers, and have the truss/LVL supplier or an engineer confirm the ridge and valley sizes and the outward thrust before ordering.`);
   if(STATS.entry){ const e=STATS.entry; push('Spans','ok','Entry gable over the steps',`8/12 gable, ${ftin(2*e.HW)} wide between the step posts (widened from 4'-0" on A-4). Ridge is level, ${ftin(e.zR-e.zE)} above the porch eave, ${e.atWall?`and runs into the house wall ${ftin(e.wallRise)} above the porch roof (valleys ${ftin(2*e.wallHW)} apart at the wall), so 2x6 nailers on the wall pick up the sheathing and step flashing is needed there`:`and dies into the 2/12 porch roof ${ftin(-e.yEnd)} from the wall`}. Vaulted and open at the front: the porch beam is left out of the entry bay, and the porch rafters stop at doubled 2x8 valley rafters (${STATS.porchJacks} porch jacks) that run from the gable's front corners over the beam ends at the step posts (the side bays' beams cantilever 6" past the posts to catch them) to the house ledger. A (2) 2x8 ridge beam hangs from the house wall and lands on a doubled 2x6 front rafter pair set flush with the porch fascia; ${STATS.entryRafters} 2x6 rafters @ 16" in all. No plate, studs or sub-fascia cross the opening, so the vault runs out to the fascia.`); }
   push('Spans','ok','Shed & porch rafters 2x6 #2 SYP @ 24"',`Rear shed (3/12) spans ${ftin(BK-DP)}; front porch (2/12) spans 8'-0"; both under the ~13'-0" allowable (20 psf live, 10 dead). Bedroom ceiling joists 2x6 @ 16" span ${ftin(BK-DP)} (no attic storage).`);
@@ -1834,6 +1834,36 @@ async function exportPdfSet(){
 }
 document.getElementById('b-pdf').addEventListener('click',exportPdfSet);
 
+// ---- AR: USDZ for AR Quick Look (ARKit) on iPhone/iPad; real-world scale (model is in feet → meters) ----
+async function buildUSDZ(){
+  const { USDZExporter } = await import('three/addons/exporters/USDZExporter.js');
+  const root=new THREE.Group(); root.scale.setScalar(0.3048);
+  scene.updateMatrixWorld(true);
+  for(const L of LAYERS){ const g=groups[L.id]; if(!g.visible) continue;
+    g.traverseVisible(o=>{ if(!o.isMesh || !o.material || !o.material.isMeshStandardMaterial) return; const c=new THREE.Mesh(o.geometry,o.userData.mat||o.material); c.matrixAutoUpdate=false; c.matrix.copy(o.matrixWorld); root.add(c); }); }
+  root.updateMatrixWorld(true);
+  const data=await new USDZExporter().parse(root,{quickLookCompatible:true});
+  return new Blob([data],{type:'model/vnd.usdz+zip'});
+}
+async function viewInAR(){
+  const msg=document.getElementById('pdf-msg'), btn=document.getElementById('b-ar'); btn.disabled=true; msg.textContent='Building AR model…';
+  try{
+    const blob=await buildUSDZ(), mb=(blob.size/1048576).toFixed(1);
+    const a=document.createElement('a');
+    if(a.relList && a.relList.supports && a.relList.supports('ar')){   // iOS / iPadOS Safari: AR Quick Look
+      a.rel='ar'; a.href=URL.createObjectURL(blob); a.appendChild(document.createElement('img')); document.body.appendChild(a); a.click(); a.remove();
+      msg.textContent=`Opening AR (${mb} MB)…`; return; }
+    const filename='Bastine-House-framing.usdz';
+    const dl = window.claude?.use ? await Promise.race([window.claude.use('downloads'), new Promise(r=>setTimeout(()=>r(null),4000))]).catch(()=>null) : null;
+    if(dl){ const { zipSync } = await import('three/addons/libs/fflate.module.js'); const zip=zipSync({[filename]:new Uint8Array(await blob.arrayBuffer())},{level:0});
+      try{ await dl.save({filename:'Bastine-House-framing-usdz.zip',data:new Blob([zip])}); msg.textContent='Saved the USDZ (zipped). Open it on an iPhone or iPad to place it in AR.'; }
+      catch(e){ msg.textContent = e?.code==='declined' ? 'Save cancelled.' : 'Saving isn\'t available in this view.'; } }
+    else { a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); a.remove(); msg.textContent=`Downloaded ${filename} (${mb} MB). Open it on an iPhone or iPad to place it in AR.`; }
+  } catch(e){ console.error(e); msg.textContent=(e&&e.message)?e.message:'AR export failed.'; }
+  finally{ btn.disabled=false; }
+}
+document.getElementById('b-ar').addEventListener('click',viewInAR);
+
 function loop(now){ requestAnimationFrame(loop); stepAnim(now); if(!anim) controls.update(); renderer.render(scene,cam); updateCube(); updateLabels(); updateMeasLabels(); }
 
 /* =====================================================================
@@ -1974,7 +2004,7 @@ $('#b-fit').addEventListener('click',()=>setView('iso'));
 $('#explode').addEventListener('input',e=>{ state.explode=+e.target.value; applyExplode(); });
 
 rebuild(); renderPrices(); requestAnimationFrame(loop);
-window.__app={state,COST:()=>COST,M:()=>M,cam:()=>cam,controls,setView,renderer,THREE,setOrtho};
+window.__app={buildUSDZ,state,COST:()=>COST,M:()=>M,cam:()=>cam,controls,setView,renderer,THREE,setOrtho};
 </script>
 
 </body>
