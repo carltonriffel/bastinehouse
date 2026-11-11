@@ -1,0 +1,1971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bastine House Framing Takeoff</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-screen app — 3D stage left, takeoff/cost panel right; stacks on phones. Dark-only by request. */
+:root{
+  --bg:#0c1116; --stage:#10171e; --panel:#141c24; --panel-2:#1a242e; --line:#26323e; --line-2:#334252;
+  --fg:#e9e4d8; --muted:#8c99a5; --dim:#5f6d7a;
+  --accent:#e6b062; --accent-ink:#1b1408; --truss:#6d9de3;
+  --measure:#53d1e8; --ok:#69c48d; --warn:#ff7d5c; --info:#73a9de;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--body);margin:0;overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand svg{flex:none}
+.brand h1{font:700 26px/1 var(--display);letter-spacing:.02em;margin:0;text-transform:uppercase}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.kpis{display:flex;gap:6px;flex-wrap:wrap}
+.pdfbox{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;min-width:0}
+.pdfbox .btn{padding:9px 14px;font-size:13px}
+#pdf-msg{font-size:11px;color:var(--muted);max-width:220px;text-align:right}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;min-width:96px}
+.kpi span{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font:500 17px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.kpi.total{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.kpi.total span{color:var(--accent-ink);opacity:.75}
+
+/* main */
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:12px}
+.viewer{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:0}
+#stage{position:absolute;inset:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.dl{position:absolute;transform:translate(-50%,-50%);font:500 11px/1 var(--mono);color:var(--accent);background:rgba(12,17,22,.82);border:1px solid var(--line-2);padding:3px 5px;border-radius:4px;white-space:nowrap}
+.dl.h{color:var(--info)}
+#mlabels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.ml{position:absolute;transform:translate(-50%,-130%);font:600 12px/1 var(--mono);color:#06222a;background:var(--measure);padding:4px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.ml.live{background:transparent;color:var(--measure);border:1px dashed var(--measure)}
+.viewer.measuring #stage canvas{cursor:crosshair}
+.mpanel{position:absolute;right:14px;top:12px;width:250px;max-height:calc(100% - 150px);overflow:auto;background:rgba(20,28,36,.95);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:12px}
+.mpanel h4{margin:0 0 6px;font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--measure);display:flex;justify-content:space-between;align-items:center}
+.mpanel h4 button{background:none;border:1px solid var(--line-2);border-radius:5px;color:var(--muted);font:600 10.5px var(--display);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;cursor:pointer}
+.mpanel p{margin:0 0 6px;color:var(--muted)}
+.mrow{display:grid;grid-template-columns:18px 1fr auto;gap:2px 8px;align-items:start;padding:5px 0;border-top:1px solid var(--line)}
+.mrow b{font:600 13px var(--mono);color:var(--fg)}
+.mrow small{grid-column:2;color:var(--muted);font:11px var(--mono)}
+.mrow .x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
+.mrow .n{color:var(--measure);font:600 12px var(--mono)}
+@media (max-width:560px){.mpanel{left:14px;right:auto;top:auto;bottom:200px;width:auto;max-width:calc(100% - 28px)}}
+.hint{position:absolute;left:14px;top:12px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px;pointer-events:none}
+.hint b{font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
+.sel{position:absolute;left:14px;bottom:128px;max-width:300px;background:rgba(20,28,36,.95);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:12.5px}
+.sel h4{margin:0 0 4px;font:600 15px var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+.sel dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0}
+.sel dt{color:var(--muted)} .sel dd{margin:0;font-family:var(--mono);font-size:12px}
+.sel button{position:absolute;right:6px;top:6px;background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:4px}
+
+/* dock */
+.plan{position:absolute;inset:0;background:var(--stage);z-index:1}
+.plan svg{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.plan svg.drag{cursor:grabbing}
+.plantag{position:absolute;left:14px;top:12px;max-width:min(560px,calc(100% - 28px));font-size:12px;color:var(--muted);pointer-events:none}
+.plantag b{display:block;font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
+.hint,.sel,.mpanel{z-index:2}
+.dock{z-index:3;position:absolute;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(20,28,36,.94);border:1px solid var(--line-2);border-radius:14px;padding:8px 12px;box-shadow:0 10px 30px rgba(0,0,0,.45);max-width:calc(100% - 24px)}
+.vc{width:84px;height:84px;perspective:none;flex:none;position:relative}
+.cube{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+.face{position:absolute;width:52px;height:52px;left:-26px;top:-26px;display:grid;place-items:center;font:700 10px var(--display);letter-spacing:.08em;background:rgba(40,54,68,.92);border:1px solid #4a5d70;color:#cfd8e1;cursor:pointer;user-select:none;backface-visibility:hidden}
+.face:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.dock-c{display:flex;flex-direction:column;gap:6px;min-width:0}
+.row{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.vb{background:var(--panel-2);border:1px solid var(--line-2);border-radius:7px;padding:5px 9px;font:600 12px var(--display);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;color:var(--fg)}
+.vb:hover{border-color:var(--accent)}
+.vb[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.sep{width:1px;height:20px;background:var(--line-2);margin:0 2px}
+.rng{display:flex;align-items:center;gap:6px;font:600 11px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input[type=range]{accent-color:var(--accent);width:110px}
+
+/* panel */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--line);flex:none}
+.tab{flex:1;background:none;border:0;padding:11px 6px 9px;font:600 14px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;display:flex;gap:6px;justify-content:center;align-items:center}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.badge{font:500 10px var(--mono);background:var(--warn);color:#1a0b06;border-radius:9px;padding:1px 6px}
+.tabbody{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.tabbody>*{flex:none}
+.card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card h3{margin:0 0 8px;font:600 14px var(--display);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:center;font-size:12.5px;color:var(--muted)}
+select,input[type=number],input[type=text]{background:var(--bg);border:1px solid var(--line-2);border-radius:6px;padding:5px 8px;min-width:0;width:100%}
+input[type=number]{font-family:var(--mono);font-size:12.5px;text-align:right}
+
+.sum{display:grid;grid-template-columns:1fr auto;gap:3px 12px;font-size:13px}
+.sum b{font:500 13px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.sum .t{border-top:1px solid var(--line-2);padding-top:6px;margin-top:4px;font-weight:600}
+.sum .t+b{border-top:1px solid var(--line-2);padding-top:6px;margin-top:4px;color:var(--accent);font-size:15px}
+.stack{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:10px 0 4px;background:var(--bg)}
+.stack i{display:block;height:100%}
+
+.layer{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.layer.off{opacity:.55}
+.lh{display:grid;grid-template-columns:30px 12px 1fr auto auto 26px;align-items:center;gap:8px;padding:9px 10px}
+.eye{background:none;border:1px solid var(--line-2);border-radius:6px;width:28px;height:26px;display:grid;place-items:center;cursor:pointer;color:var(--fg)}
+.eye[aria-pressed="false"]{color:var(--dim)}
+.sw{width:12px;height:12px;border-radius:3px}
+.ln{min-width:0}
+.ln b{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ln small{color:var(--muted);font-size:11.5px}
+.inc{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer}
+.inc input{accent-color:var(--accent)}
+.lc{font:500 13px var(--mono);text-align:right;min-width:72px;font-variant-numeric:tabular-nums}
+.chev{background:none;border:0;cursor:pointer;color:var(--muted);width:26px;height:26px;display:grid;place-items:center;transition:transform .15s}
+.chev[aria-expanded="true"]{transform:rotate(180deg)}
+.lb{border-top:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:8px}
+.labrow{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.labrow input{width:84px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font:600 11px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+td{padding:4px 6px;border-bottom:1px solid rgba(38,50,62,.6);vertical-align:top}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td small{color:var(--muted);display:block;font-size:10.5px}
+tfoot td{font-weight:600;border-bottom:0}
+.grp{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}
+.grp h3{margin:0}
+.grp span{font:500 12px var(--mono);color:var(--muted)}
+
+.pb{display:grid;grid-template-columns:1fr 92px;gap:6px 10px;align-items:center;font-size:12.5px}
+.pb label{color:var(--fg)} .pb label small{color:var(--muted);margin-left:4px}
+.btn{background:var(--panel-2);border:1px solid var(--line-2);border-radius:7px;padding:6px 12px;cursor:pointer;font:600 12px var(--display);letter-spacing:.08em;text-transform:uppercase}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.note{font-size:12px;color:var(--muted);margin:0}
+
+.chk{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.chk:last-child{border-bottom:0}
+.pill{font:600 10.5px var(--display);letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:2px 7px;align-self:start;margin-top:1px;text-align:center;min-width:44px}
+.pill.ok{background:rgba(105,196,141,.16);color:var(--ok);border:1px solid rgba(105,196,141,.4)}
+.pill.warn{background:rgba(255,125,92,.14);color:var(--warn);border:1px solid rgba(255,125,92,.45)}
+.pill.fix{background:rgba(230,176,98,.14);color:var(--accent);border:1px solid rgba(230,176,98,.45)}
+.pill.info{background:rgba(115,169,222,.14);color:var(--info);border:1px solid rgba(115,169,222,.4)}
+.chk b{font-weight:600;font-size:13px}
+.chk p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.chk code{font-family:var(--mono);font-size:11.5px;color:var(--fg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+
+@media (max-width:980px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100%}
+  .main{grid-template-columns:1fr}
+  .viewer{height:68vh;min-height:440px}
+  .panel{max-height:none}
+  .tabbody{overflow:visible}
+}
+@media (max-width:560px){
+  .kpi{min-width:0;flex:1}
+  .dock{flex-direction:column;gap:6px;padding:8px}
+  .vc{width:70px;height:70px}
+  .sel{bottom:auto;top:56px}
+  .opt{grid-template-columns:1fr}
+  .vb{padding:4px 7px;font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="bar">
+    <div class="brand">
+      <svg width="40" height="30" viewBox="0 0 40 30" aria-hidden="true"><path d="M2 27 L20 4 L38 27 Z M2 27 H38 M20 4 V27 M11 15.5 L20 27 L29 15.5" fill="none" stroke="#e6b062" stroke-width="2" stroke-linejoin="round"/></svg>
+      <div>
+        <h1>Bastine House</h1>
+        <p>Framing package takeoff · Sheets A-1 to A-9 (10/20/2026) · Southeast average pricing</p>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="pdfbox"><button class="btn pri" id="b-pdf" title="Plans, window & door schedule, material list, structural schedules">Export PDF set</button><span id="pdf-msg" role="status" aria-live="polite"></span></div>
+      <div class="kpi"><span>Material</span><b id="k-mat">–</b></div>
+      <div class="kpi"><span>Lumber</span><b id="k-bf">–</b></div>
+      <div class="kpi"><span>Per sq ft</span><b id="k-psf">–</b></div>
+      <div class="kpi total"><span>Package total</span><b id="k-tot">–</b></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="viewer" id="viewer" aria-label="3D framing model">
+      <div id="stage"></div>
+      <div id="labels"></div>
+      <div id="mlabels"></div>
+      <div class="mpanel" id="mpanel" hidden></div>
+      <div class="plan" id="plan" hidden><svg id="plansvg" xmlns="http://www.w3.org/2000/svg" aria-label="Floor plan"></svg><div class="plantag" id="plantag"></div></div>
+      <div class="hint"><b>Framing model</b><span>Drag to orbit · right-drag to pan · scroll to zoom · click a member · M for tape measure</span></div>
+      <div class="sel" id="sel" hidden></div>
+      <div class="dock" role="toolbar" aria-label="3D view controls">
+        <div class="vc" title="Click a face for a straight-on view">
+          <div class="cube" id="cube">
+            <div class="face" data-v="front">FRONT</div>
+            <div class="face" data-v="back">BACK</div>
+            <div class="face" data-v="right">RIGHT</div>
+            <div class="face" data-v="left">LEFT</div>
+            <div class="face" data-v="top">TOP</div>
+            <div class="face" data-v="bottom">BTM</div>
+          </div>
+        </div>
+        <div class="dock-c">
+          <div class="row" id="row-mode" role="group" aria-label="View">
+            <button class="vb" data-mode="3d" aria-pressed="true">3D</button>
+            <button class="vb" data-mode="p1" aria-pressed="false">1st floor plan</button>
+            <button class="vb" data-mode="p2" aria-pressed="false">2nd floor plan</button>
+          </div>
+          <div class="row" id="row-plan" hidden>
+            <button class="vb" id="pl-fin" aria-pressed="true" title="Dimension to finished drywall faces, or to framing">Finished faces</button>
+            <button class="vb" id="pl-dims" aria-pressed="true">Room dims</button>
+            <button class="vb" id="pl-fit">Fit</button>
+          </div>
+          <div class="row" id="row-3a">
+            <button class="vb" data-v="iso" id="v-iso">Iso</button>
+            <button class="vb" data-v="front">Front</button>
+            <button class="vb" data-v="back">Back</button>
+            <button class="vb" data-v="left">Left</button>
+            <button class="vb" data-v="right">Right</button>
+            <button class="vb" data-v="top">Top</button>
+          </div>
+          <div class="row" id="row-3b">
+            <button class="vb" id="b-ortho" aria-pressed="false" title="Orthographic (elevation-style) projection">Ortho</button>
+            <button class="vb" id="b-dims" aria-pressed="true">Dims</button>
+            <button class="vb" id="b-fit">Fit</button>
+            <button class="vb" id="b-meas" aria-pressed="false" title="Tape measure (M): click two points; Shift locks to an axis">Measure</button>
+            <span class="sep"></span>
+            <label class="rng" for="explode">Explode <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <nav class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="layers" aria-selected="true">Layers</button>
+        <button class="tab" role="tab" data-tab="takeoff" aria-selected="false">Takeoff</button>
+        <button class="tab" role="tab" data-tab="prices" aria-selected="false">Prices</button>
+        <button class="tab" role="tab" data-tab="checks" aria-selected="false">Checks <span class="badge" id="chk-badge" hidden>0</span></button>
+      </nav>
+      <div class="tabbody" id="tab-layers"></div>
+      <div class="tabbody" id="tab-takeoff" hidden></div>
+      <div class="tabbody" id="tab-prices" hidden></div>
+      <div class="tabbody" id="tab-checks" hidden></div>
+    </aside>
+  </main>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* =====================================================================
+   1. GEOMETRY FROM THE DRAWINGS  (plan coords, feet)
+   X: left → right (0–30) · Y: front wall face (0) → rear (26 main, 36'-1" bump)
+   Z: elevation above top of slab
+   ===================================================================== */
+const IN = 1/12, P = 1.5*IN, T6 = 5.5*IN, T4 = 3.5*IN;
+const WD = 30, DP = 26, RIDGE_DWG = 21.8;
+// Truss chords: 2x4 top & bottom. Standard heel: top-chord bottom edge meets the bottom of the bottom chord at the
+// outside face of the wall, so heel height (plate → top of top chord, plumb at outside face) = top-chord plumb depth.
+const TC_D = 3.5/12, BC_D = 3.5/12;
+const plumb = (d,p) => d*Math.sqrt(1+p*p);
+const HEEL_R = plumb(TC_D,4/12), HEEL_F = plumb(TC_D,8/12);   // 3-11/16" rear, 4-3/16" front
+let BK, PLATE1, SUB2, PLATE2B, YR, RTC, PLATE2F, RBC, SHED_SEAT, PORCH_SEAT, AREA_L1, BUMP_PLATE, LOFT_WIN, LOFT_HEAD, GABLE_HEAD;
+const PB_ = 4/12, PF_ = 8/12;                 // rear / front main-roof pitch (A-9)
+const JOIST_D = {syp:11.25, ij:11.875, ft:12, ft16:16};
+// Resolved mode: plan strings close to the overall dims; plate heights stay as drawn and studs are cut from stock lengths.
+function applyGeometry(){
+  const Rz = state.geo==='resolved';
+  BK = state.bedClear ? DP + state.bedClear + T6 + 2*DW          // bedroom set to a finished clear depth
+     : (Rz ? 36 : 36 + 1/12);                                   // 10'+26' and 16'-1"+17'-9"+2'-2" both = 36'-0"
+  PLATE1 = 9.0;                                                 // A-3–A-6 top of plate
+  SUB2 = Rz ? PLATE1 + (JOIST_D[state.joist]+0.719)/12 : 10.1;  // I-joist → 10'-1 3/4" (matches A-4)
+  PLATE2B = 18.3;                                               // A-3–A-6 top of plate
+  YR = DP - (11 + 4/12);                                       // ridge line 11'-4" from rear (A-2 CL)
+  RTC = PLATE2B + HEEL_R + (DP - YR)*PB_;                         // top-chord peak from rear plate + 4/12
+  PLATE2F = RTC - YR*PF_ - HEEL_F;                              // front knee-wall plate from 8/12
+  RBC = RTC - 2.0;                                              // scissor bottom-chord peak
+  BUMP_PLATE = PLATE1;                                          // bedroom walls at 9'-0" plate: flat 9' ceiling like the rest of the 1st floor
+  SHED_SEAT = BUMP_PLATE + (BK-DP)*REAR_P;                      // rear shed (bedroom + covered patio) at 3/12 rises to its ledger
+  PORCH_SEAT = Rz ? SUB2 - 0.15 : 9.95;
+  LOFT_WIN = Rz ? [6+8/12, 15, 23+4/12] : [6+8/12, 14+10/12, 23+2/12];
+  LOFT_HEAD = SUB2 + 6.75; GABLE_HEAD = SUB2 + 6.64;
+  AREA_L1 = WD*DP + (WD-14.5)*(BK-DP);
+}
+const tc = Y => Y >= YR ? RTC - (Y-YR)*PB_ : RTC - (YR-Y)*PF_;
+// underside of the scissor bottom chord: level over each bearing plate, sloping from the inside face of the wall to the peak
+const bc = Y => Y <= YR ? PLATE2F + Math.max(0,Y-T6)*(RBC-PLATE2F)/(YR-T6) : PLATE2B + Math.max(0,(DP-T6)-Y)*(RBC-PLATE2B)/((DP-T6)-YR);
+const pitchAt = Y => Y>=YR ? PB_ : PF_;
+// Dropped gable: rake-wall plate sits one 2x4 lookout (plumb) below the roof plane so ladder lookouts pass over it
+const rakeTop = Y => tc(Y) - plumb(3.5/12, pitchAt(Y));
+const SHED_P = 2/12;                           // front porch roof
+const REAR_P = 3/12;                           // rear shed roof over the bedroom and covered patio
+const shedSeat = Y => SHED_SEAT - (Y-DP)*REAR_P;
+const porchSeat = Y => PORCH_SEAT + Y*SHED_P;  // Y negative in front of the house
+const H1 = 6 + 11.125/12, HF = 8 + 1.25/12;    // head heights: 6'-11 1/8" typical, 8'-1 1/4" front
+const AREA_L2_DWG = 534;
+
+function parseCode(s){ const d=s.split('').map(Number); if(s.length===4) return [d[0]*12+d[1], d[2]*12+d[3]]; return [d[0]*12+d[1], d[2]*12+parseInt(s.slice(3))]; }
+const win  = (c, code, head, label=code) => { const [w,h]=parseCode(code); return {c, w:(w+0.5)*IN, head, sill:head-(h+0.5)*IN, type:'win', label}; };
+const mull = (c, code, n, head, label) => { const [w,h]=parseCode(code); return {c, w:(w*n+(n-1)+0.5)*IN, head, sill:head-(h+0.5)*IN, type:'win', label}; };
+const door = (c, code, head, label=code) => { const [w]=parseCode(code); return {c, w:(w+2)*IN, head, sill:null, type:'door', label}; };
+
+// Owner's sketch → wall centerlines (finished faces: ±(T4/2+DW) = 2-1/4" each side of center)
+let IH=0; const RF=()=>DP-T6-DW, VENT_X=()=>14.5-SHEATH_T-0.45;   // dryer vent exits the patio side of the rear wall, one bay left of the bedroom corner
+const IX={}, IY={};
+function layoutInterior(){ IH=T4/2+DW; const L0=T6+DW, R0=WD-T6-DW, i=1/12;
+  IX.I4=R0-88*i-IH; IX.I2=IX.I4-2*IH-40*i; IX.I1=IX.I2-2*IH-40*i;      // bath 88", hall 40", W/D & pantry 40"; kitchen takes the rest
+  IX.I9=R0-60*i-IH; IX.I5=IX.I4+IH+54*i-IH;                       // 24" linen nook; 54" vanity spans closet + its side wall
+  IY.I3=RF()-62*i-IH; IY.I7=IY.I3-2*IH-60*i; IY.SH1=IY.I7+IH+30*i;       // W/D 62", pantry 60", shower 30"
+  IY.I6=RF()-33*i+IH; IX.K=IX.I1-IH-L0; }
+let WALLS;
+function makeWalls(){ layoutInterior(); return [
+  // ---- 1st floor exterior (2x6, 6 1/2" w/ sheathing per A-1 note) ----
+  {id:'W1',name:'Front wall',layer:'l1ext',lvl:0,axis:'x',at:T6/2,from:0,to:WD,size:'2x6',base:0,top:PLATE1,ext:true,pt:true,bearing:'roof+floor',ends:[1,1],
+   openings:[win(4.75,'3068',HF,'3068MU'),door(11+11/12,'3080',HF,'3080 entry'),win(19,'3068',HF,'3068MU'),win(23.5,'3068',HF,'3068MU')],
+   sheath:{outer:0,side:-1,from:0,to:WD,z0:0,top:SUB2}},
+  {id:'W2',name:'Left wall',layer:'l1ext',lvl:0,axis:'y',at:T6/2,from:T6,to:DP-T6,size:'2x6',base:0,top:PLATE1,ext:true,pt:true,bearing:'roof',ends:[0,0],points:[12],
+   openings:[mull(6+4/12,'2052',3,H1,'(3) 2052DH mulled'),win(14+5/12,'2052',H1,'2052DH')],
+   sheath:{outer:0,side:-1,from:0,to:DP,z0:0,top:SUB2}},
+  {id:'W3',name:'Rear wall (main)',layer:'l1ext',lvl:0,axis:'x',at:DP-T6/2,from:0,to:WD,size:'2x6',base:0,top:PLATE1,ext:true,pt:true,bearing:'roof+floor',ends:[1,1],
+   openings:[win(6.75,'3026',H1,'3026SC sink'),door(IX.I1-IH-(22+18)/12,'3068',H1,'3068 patio'),{...door((IX.I2+IX.I4)/2,'2868',H1,'2868 bedroom (hall end)'),shared:true,fixed:true,swing:1,hinge:'hi'},{...door((IX.I4+IX.I5)/2,'3068',H1,'3068 bifold bedroom closet'),shared:true,fixed:true,bifold:true,swing:1}],
+   sheath:{outer:DP,side:1,from:0,to:14.5,z0:0,top:SUB2}},
+  {id:'W4',name:'Right wall',layer:'l1ext',lvl:0,axis:'y',at:WD-T6/2,from:T6,to:DP-T6,size:'2x6',base:0,top:PLATE1,ext:true,pt:true,bearing:'roof',ends:[0,0],points:[12],
+   openings:[win(4,'2524',H1,'2524FX stair'),win(20,'26211',H1,'26211DH bath')],
+   sheath:{outer:WD,side:1,from:0,to:DP,z0:0,top:SUB2}},
+  {id:'B1',name:'Bedroom left wall',dwTop:PLATE1,layer:'l1ext',lvl:0,axis:'y',at:14.5+T6/2,from:DP,to:BK-T6,size:'2x6',base:0,top:shedSeat,breaks:[],ext:true,pt:true,bearing:'none',ends:[0,0],
+   openings:[{...door(30.2,'3068',H1,'3068 patio'),hinge:'hi'}],
+   sheath:{outer:14.5,side:-1,from:DP,to:BK,z0:0,top:shedSeat}},
+  {id:'B2',name:'Bedroom rear wall',layer:'l1ext',lvl:0,axis:'x',at:BK-T6/2,from:14.5,to:WD,size:'2x6',base:0,top:shedSeat(BK),ext:true,pt:true,bearing:'roof',ends:[1,1],
+   openings:[win(18+2/12,'3054',H1,'3054DH')],
+   sheath:{outer:BK,side:1,from:14.5,to:WD,z0:0,top:shedSeat(BK)}},
+  {id:'B3',name:'Bedroom right wall',dwTop:PLATE1,layer:'l1ext',lvl:0,axis:'y',at:WD-T6/2,from:DP,to:BK-T6,size:'2x6',base:0,top:shedSeat,breaks:[],ext:true,pt:true,bearing:'none',ends:[0,0],
+   openings:[], sheath:{outer:WD,side:1,from:DP,to:BK,z0:0,top:shedSeat}},
+  // ---- 1st floor interior: centerlines of the designer's 4" walls, back-solved from the A-1 room strings
+  //      (14'-1" + 4" + 3'-1" + 4" + 3'-3" + 4" + 7'-6" = 28'-11"); framed 2x4, so 4-1/2" finished with drywall
+  // Interior layout per the owner's graph-paper sketch (10/26): clear finished dims K 166-1/2" (sketch 167") | W/D & pantry 40" | hall 40" | bath 88" (60" shower; the linen nook takes 23-1/2" because the shower wall finishes at 4-1/2").
+  // Rear-to-front: W/D 62", pantry 60"; bedroom closet 33" from the rear wall face (bifold into the bedroom), toilet alcove 34" wide beside it, 54" vanity under the closet.
+  {id:'I1',name:'Kitchen / W-D & pantry wall',layer:'l1int',lvl:0,axis:'y',at:IX.I1,from:IY.I7+T4/2,to:DP-T6,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,1],openings:[{...door(17.08,'2668',H1,'2668 pantry (swings out)'),swing:-1,hinge:'hi'}]},
+  {id:'I2',name:'W-D & pantry / hall wall',layer:'l1int',lvl:0,axis:'y',at:IX.I2,from:IY.I7+T4/2,to:DP-T6,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,1],openings:[{...door(22.4,'3068',H1,'3068 W/D barn door opening (cased)'),fixed:true,barn:true,swing:1}]},
+  {id:'I3',name:'W-D / pantry wall',layer:'l1int',lvl:0,axis:'x',at:IY.I3,from:IX.I1+T4/2,to:IX.I2-T4/2,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,1],openings:[]},
+  {id:'I4',name:'Hall / bath wall',layer:'l1int',lvl:0,axis:'y',at:IX.I4,from:IY.I7+T4/2,to:DP-T6,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,1],openings:[door(19.3,'2668',H1,'2668 bath')]},
+  {id:'I5',name:'Closet / toilet alcove wall',layer:'l1int',lvl:0,axis:'y',at:IX.I5,from:IY.I6-T4/2,to:DP-T6,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,1],openings:[]},
+  {id:'I6',name:'Bedroom closet front wall',layer:'l1int',lvl:0,axis:'x',at:IY.I6,from:IX.I4+T4/2,to:IX.I5+T4/2,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,1],openings:[]},
+  {id:'I7',name:'Pantry front wall',layer:'l1int',lvl:0,axis:'x',at:IY.I7,from:IX.I1-T4/2,to:IX.I2+T4/2,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,1],openings:[]},
+  {id:'I9',name:'Linen nook / shower wall',layer:'l1int',lvl:0,axis:'y',at:IX.I9,from:IY.I7+T4/2,to:IY.SH1,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'none',ends:[1,0],openings:[]},
+  ...(()=>{ const S=stairGeom(), base={layer:'l1int',lvl:0,axis:'x',at:IY.I7,size:'2x4',base:0,pt:true,bearing:'none',openings:[]};
+    if(!(S.ext && S.YT>IY.I7)) return [{...base,id:'I12',name:'Bath front wall (shower & linen back)',from:IX.I4-T4/2,to:WD-T6,top:PLATE1,ends:[1,1]}];
+    const zAt=y=>S.HL+(y-S.YL)/S.tU*S.rh, deep=11.25*IN/Math.cos(Math.atan(S.rh/S.tU))-0.3, zs=Math.floor((zAt(IY.I7+T4/2)-deep)*12)/12;   // wall under the stair stops below the stringers (soffit over the shower front)
+    return [{...base,id:'I12',name:'Bath front wall (shower & linen back)',from:IX.I4-T4/2,to:S.X0,top:PLATE1,ends:[1,0]},
+            {...base,id:'I12b',name:'Bath front wall under stair (soffit)',from:S.X0,to:WD-T6,top:zs,ends:[0,1]}]; })(),
+  {id:'I10',name:'Dining rear wall (under beam)',layer:'l1int',lvl:0,axis:'x',at:12.208,from:T6,to:9.208-T4/2,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'roof+floor',ends:[1,1],openings:[door(4.9,'3668',H1,'3668 cased')]},
+  {id:'I11',name:'Dining / living wall',layer:'l1int',lvl:0,axis:'y',at:9.208,from:T6,to:12.208+T4/2,size:'2x4',base:0,top:PLATE1,pt:true,bearing:'roof+floor',ends:[1,1],openings:[door(6.0,'7868',H1,'7868 cased')]},
+  // ---- 2nd floor ----
+  {id:'U1',name:'Loft rear wall',layer:'l2walls',lvl:2,axis:'x',at:DP-T6/2,from:0,to:WD,size:'2x6',base:SUB2,top:PLATE2B,ext:true,bearing:'roof',ends:[1,1],
+   openings:[win(LOFT_WIN[0],'4630',LOFT_HEAD,'4630RS'),{...win(LOFT_WIN[1],'2630',LOFT_HEAD,'2630RS'),fixed:true},win(LOFT_WIN[2],'4630',LOFT_HEAD,'4630RS')],
+   sheath:{outer:DP,side:1,from:0,to:WD,z0:SUB2,top:PLATE2B+HEEL_R}},
+  {id:'U2',name:'Loft front knee wall',layer:'l2walls',lvl:2,axis:'x',at:T6/2,from:0,to:WD,size:'2x6',base:SUB2,top:PLATE2F,ext:true,bearing:'roof',ends:[1,1],openings:[],
+   sheath:{outer:0,side:-1,from:0,to:WD,z0:SUB2,top:PLATE2F+HEEL_F}},
+  {id:'U3',name:'Left gable rake wall',layer:'l2walls',lvl:2,axis:'y',at:T6/2,from:T6,to:DP-T6,size:'2x6',base:SUB2,top:rakeTop,breaks:[YR],ext:true,bearing:'none',ends:[0,0],
+   openings:[{...win(YR,'3030',GABLE_HEAD,'3030FX gable'),fixed:true}], sheath:{outer:0,side:-1,from:0,to:DP,z0:SUB2,top:tc,breaks:[YR]}},
+  {id:'U4',name:'Right gable rake wall',layer:'l2walls',lvl:2,axis:'y',at:WD-T6/2,from:T6,to:DP-T6,size:'2x6',base:SUB2,top:rakeTop,breaks:[YR],ext:true,bearing:'none',ends:[0,0],
+   openings:[{...win(YR,'3030',GABLE_HEAD,'3030FX gable'),fixed:true}], sheath:{outer:WD,side:1,from:0,to:DP,z0:SUB2,top:tc,breaks:[YR]}},
+  {id:'U5',name:'Attic storage wall',layer:'l2walls',lvl:2,axis:'x',at:6.625,from:T6,to:9.208-T4/2,size:'2x4',base:SUB2,top:bc(6.625),bearing:'none',ends:[1,1],openings:[door(2.2,'2641',SUB2+51.5/12,'2641 attic')]},
+  {id:'U6',name:'Storage / open-below wall',layer:'l2walls',lvl:2,axis:'y',at:9.208,from:T6,to:6.625+T4/2,size:'2x4',base:SUB2,top:bc,breaks:[],bearing:'none',ends:[1,1],openings:[]},
+  // loft half bath at the rear-left corner (over the kitchen plumbing wall); mirror of the A-2 location
+  {id:'U7',name:'Loft bath front wall',layer:'l2walls',lvl:2,axis:'x',at:19.8,from:T6,to:3.55+T4/2,size:'2x4',base:SUB2,top:bc(19.8),bearing:'none',ends:[1,1],openings:[{...door((T6+3.55-T4/2)/2,'2468',SUB2+82.5/12,'2468 loft bath (swings out)'),shared:true,fixed:true,swing:-1}]},
+  {id:'U8',name:'Loft bath side wall',layer:'l2walls',lvl:2,axis:'y',at:3.55,from:19.8+T4/2,to:DP-T6,size:'2x4',base:SUB2,top:bc,breaks:[],bearing:'none',ends:[1,1],openings:[]},
+]; }
+
+/* =====================================================================
+   2. PRICE BOOK — Southeast average yard pricing (editable)
+   ===================================================================== */
+const PB = {
+  'SYP-2x4':{name:'2x4 #2 SYP',cat:'Dimensional SYP #2',unit:'LF',price:0.52,w:'L',bf:0.667},
+  'SYP-2x6':{name:'2x6 #2 SYP',cat:'Dimensional SYP #2',unit:'LF',price:0.80,w:'L',bf:1.0},
+  'SYP-2x8':{name:'2x8 #2 SYP',cat:'Dimensional SYP #2',unit:'LF',price:1.02,w:'L',bf:1.333},
+  'SYP-2x10':{name:'2x10 #2 SYP',cat:'Dimensional SYP #2',unit:'LF',price:1.32,w:'L',bf:1.667},
+  'SYP-2x12':{name:'2x12 #2 SYP',cat:'Dimensional SYP #2',unit:'LF',price:1.78,w:'L',bf:2.0},
+  'PT-2x4':{name:'2x4 PT SYP (ground contact)',cat:'Pressure-Treated',unit:'LF',price:0.74,w:'L',bf:0.667},
+  'PT-2x6':{name:'2x6 PT SYP (ground contact)',cat:'Pressure-Treated',unit:'LF',price:1.05,w:'L',bf:1.0},
+  'PT-2x8':{name:'2x8 PT SYP ledger',cat:'Pressure-Treated',unit:'LF',price:1.38,w:'L',bf:1.333},
+  'PT-6x6':{name:'6x6 PT post',cat:'Pressure-Treated',unit:'LF',price:4.60,w:'L',bf:3.0},
+  'LVL-9.25':{name:'1-3/4 × 9-1/4 LVL',cat:'Engineered Lumber',unit:'LF',price:7.40,w:'E'},
+  'LVL-11.875':{name:'1-3/4 × 11-7/8 LVL',cat:'Engineered Lumber',unit:'LF',price:9.10,w:'E'},
+  'IJ-11.875':{name:'11-7/8" I-joist',cat:'Engineered Lumber',unit:'LF',price:3.45,w:'E'},
+  'RIM-11.875':{name:'1-1/8 × 11-7/8 rim board',cat:'Engineered Lumber',unit:'LF',price:3.30,w:'E'},
+  'FT-12':{name:'12" open-web floor truss (4x2 chords)',cat:'Floor Trusses',unit:'LF',price:7.50,w:'N'},
+  'FT-16':{name:'16" open-web floor truss w/ duct chase',cat:'Floor Trusses',unit:'LF',price:8.90,w:'N'},
+  'PSL-5.25':{name:'5-1/4 × 5-1/4 PSL column',cat:'Engineered Lumber',unit:'LF',price:15.50,w:'E'},
+  'TRUSS-MAIN':{name:'Roof truss, asym. scissor 26\'-0", 4/12 & 8/12',cat:'Roof Trusses',unit:'ea',price:310,w:'N'},
+  'GWB-12':{name:'1/2" gypsum board 4×12',cat:'Drywall',unit:'sheet',price:18.50,w:'P',sf:48},
+  'OSB-716':{name:'7/16" OSB wall sheathing 4×8',cat:'Sheathing & Subfloor',unit:'sheet',price:15.75,w:'P'},
+  'SUB-2332':{name:'23/32" T&G subfloor 4×8',cat:'Sheathing & Subfloor',unit:'sheet',price:39.50,w:'P'},
+  'RSH-716':{name:'7/16" radiant-barrier OSB roof deck 4×8',cat:'Sheathing & Subfloor',unit:'sheet',price:19.25,w:'P'},
+  'AB-12':{name:'1/2"×10" anchor bolt + 3×3 plate washer',cat:'Hardware & Fasteners',unit:'ea',price:2.95,w:'H'},
+  'PIN':{name:'Powder-actuated pin, interior plates',cat:'Hardware & Fasteners',unit:'ea',price:0.40,w:'H'},
+  'SEAL':{name:'5-1/2" sill sealer, 50\' roll',cat:'Hardware & Fasteners',unit:'roll',price:14.00,w:'N'},
+  'H25A':{name:'H2.5A hurricane tie',cat:'Hardware & Fasteners',unit:'ea',price:1.15,w:'H'},
+  'LUS26':{name:'LUS26 rafter hanger',cat:'Hardware & Fasteners',unit:'ea',price:1.55,w:'H'},
+  'HGR-J':{name:'Joist hanger to flush beam',cat:'Hardware & Fasteners',unit:'ea',price:2.60,w:'H'},
+  'HGR-T':{name:'Top-flange floor-truss hanger to beam',cat:'Hardware & Fasteners',unit:'ea',price:6.40,w:'H'},
+  'HGR-2':{name:'Double hanger, opening trimmer',cat:'Hardware & Fasteners',unit:'ea',price:9.50,w:'H'},
+  'LLOK':{name:'5" structural ledger screw',cat:'Hardware & Fasteners',unit:'ea',price:2.15,w:'H'},
+  'POCKET':{name:'Pocket door frame kit, 2668',cat:'Hardware & Fasteners',unit:'ea',price:89,w:'N'},
+  'ABU66':{name:'ABU66 post base',cat:'Hardware & Fasteners',unit:'ea',price:27.50,w:'N'},
+  'CAP6':{name:'6x post cap',cat:'Hardware & Fasteners',unit:'ea',price:22.00,w:'N'},
+  'STC':{name:'STC partition-to-truss clip',cat:'Hardware & Fasteners',unit:'ea',price:1.35,w:'H'},
+  'MSTA36':{name:'MSTA36 floor-to-floor strap',cat:'Hardware & Fasteners',unit:'ea',price:4.60,w:'H'},
+  'HCLIP':{name:'7/16" H-clip',cat:'Hardware & Fasteners',unit:'ea',price:0.20,w:'H'},
+  'ADH':{name:'Subfloor adhesive, 28 oz',cat:'Hardware & Fasteners',unit:'ea',price:7.25,w:'N'},
+  'N16':{name:'16d framing nails, 2,500 ct',cat:'Hardware & Fasteners',unit:'box',price:49,w:'N'},
+  'N8':{name:'8d ring-shank sheathing nails, 2,500 ct',cat:'Hardware & Fasteners',unit:'box',price:46,w:'N'},
+};
+let SCEN=null;
+const CAT_ORDER = ['Dimensional SYP #2','Pressure-Treated','Engineered Lumber','Floor Trusses','Roof Trusses','Sheathing & Subfloor','Drywall','Hardware & Fasteners'];
+
+const LAYERS = [
+  {id:'l1ext',name:'1st Floor · Exterior Walls',color:'#d9bc8f',basis:'LF wall',rate:14,vis:true},
+  {id:'l1int',name:'1st Floor · Interior Walls & Stair',color:'#bfa27a',basis:'LF wall',rate:9,vis:true},
+  {id:'floor',name:'2nd Floor System & Subfloor',color:'#c49a62',basis:'sq ft',rate:2.4,vis:true},
+  {id:'l2walls',name:'2nd Floor · Walls & Gables',color:'#e2c79c',basis:'LF wall',rate:14,vis:true},
+  {id:'trusses',name:'Main Roof · Trusses & Rakes',color:'#6d9de3',basis:'truss',rate:65,vis:true},
+  {id:'shed',name:'Rear Shed Roof & Patio',color:'#c9a46f',basis:'sq ft roof',rate:3.25,vis:true},
+  {id:'porch',name:'Front Porch Roof',color:'#d4a96e',basis:'sq ft roof',rate:3.75,vis:true},
+  {id:'wsheath',name:'Wall Sheathing',color:'#b48f5c',basis:'sheet',rate:13,vis:false},
+  {id:'rsheath',name:'Roof Sheathing',color:'#8f8068',basis:'sheet',rate:14,vis:false},
+  {id:'hardware',name:'Hardware & Fasteners',color:'#8b97a3',basis:'piece',rate:1.25,vis:true,novis:true},
+  {id:'drywall',name:'Drywall · 1/2" walls & ceilings',color:'#e8e5de',basis:'sheet',vis:false,inc:false},
+  {id:'furn',name:'Fixtures, Cabinets & Furnishings',color:'#8fb3c9',basis:'item',vis:true,inc:false,nocost:true},
+];
+const LBYID = Object.fromEntries(LAYERS.map(l=>[l.id,l]));
+const COL = {stud:'#dcbf92',pt:'#87b285',plate:'#ccaa7a',header:'#c4864a',lvl:'#e7a548',short:'#d3b386',joist:'#c79c62',rim:'#a97f4e',truss:'#6d9de3',rafter:'#c9a46f',post:'#87b285',osb:'#b8925e',sub:'#a8834f',roof:'#8e7f68'};
+
+/* =====================================================================
+   3. STATE
+   ===================================================================== */
+const DEFAULT_WASTE = {L:7,E:3,P:8,H:5,N:0};
+const state = {
+  extOC:16, joist:'ft', porchPosts:4, patioPosts:2, bedClear:11, stair:'land2', header:'auto', geo:'resolved', snap:true, cutopt:true,
+  prices:Object.fromEntries(Object.entries(PB).map(([k,v])=>[k,v.price])),
+  waste:{...DEFAULT_WASTE}, market:1.0, tax:7.0, delivery:195,
+  layers:Object.fromEntries(LAYERS.map(l=>[l.id,{vis:l.vis,inc:l.inc!==false}])),
+  open:new Set(), explode:0, dims:true, ortho:false, tab:'layers', view:'3d', planFin:true, planDims:true
+};
+
+/* =====================================================================
+   4. FORMATTERS
+   ===================================================================== */
+function ftin(ft){ const neg=ft<0; const tot=Math.round(Math.abs(ft)*96)/8; const f=Math.floor(tot/12+1e-9); const inch=tot-f*12; const whole=Math.floor(inch+1e-9); let n=Math.round((inch-whole)*8), d=8, fs='';
+  if(n){ while(n%2===0){n/=2;d/=2;} fs=` ${n}/${d}`; } return `${neg?'-':''}${f}'-${whole}${fs}"`; }
+function parseFtIn(s){ const m=s.match(/(\d+)'-(\d+)"/); return m? +m[1] + (+m[2])/12 : NaN; }
+const money = v => '$'+Math.round(v).toLocaleString('en-US');
+const money2 = v => '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num = (v,d=0) => v.toLocaleString('en-US',{maximumFractionDigits:d,minimumFractionDigits:d});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* =====================================================================
+   5. FRAMING GENERATOR
+   ===================================================================== */
+const HDR_DEPTH = {'2x6':5.5,'2x8':7.25,'2x10':9.25,'2x12':11.25};
+// Allowable spans (ft), (2) plies, #2 SYP — simplified from IRC Table R602.7(1), 28' bldg width, ≤30 psf ground snow
+const HDR_SPAN = { 'roof':{'2x6':4.5,'2x8':5.75,'2x10':7.0,'2x12':8.25}, 'roof+floor':{'2x6':3.25,'2x8':4.25,'2x10':5.25,'2x12':6.0} };
+const lvlSpan = (depthIn, bearing) => depthIn * (bearing==='roof' ? 1.0 : 0.82);
+
+let M, OPEN_REC, STATS;
+function add(m){ M.push(m); return m; }
+
+function pickHeader(w, op, availIn){
+  if(w.bearing==='none') return {type:'flat',sku:'SYP-'+w.size,label:`flat ${w.size} (non-bearing)`,depthIn:1.5,plies:1,ok:true,allow:null};
+  const table = HDR_SPAN[w.bearing], span = op.w;
+  const fits = Object.keys(HDR_DEPTH).filter(k=>HDR_DEPTH[k] <= availIn+0.01);
+  const lvlFit = [11.875,9.25].find(d=>d<=availIn+0.01);
+  const lvl = d => ({type:'lvl',sku:d===11.875?'LVL-11.875':'LVL-9.25',label:`(2) 1-3/4×${d===11.875?'11-7/8':'9-1/4'} LVL`,depthIn:d,plies:2,allow:lvlSpan(d,w.bearing),ok:span<=lvlSpan(d,w.bearing)});
+  if(state.header==='lvl' && lvlFit) return lvl(lvlFit);
+  let pick=null;
+  if(state.header==='std'){ const k=fits[fits.length-1]; if(k && table[k]>=span) pick=k; }
+  if(!pick) pick = fits.find(k=>table[k]>=span) || null;
+  if(pick) return {type:'dim',sku:'SYP-'+pick,label:`(2) ${pick}`,depthIn:HDR_DEPTH[pick],plies:2,allow:table[pick],ok:true};
+  if(lvlFit) return lvl(lvlFit);
+  const k = fits[fits.length-1] || '2x6';
+  return {type:'dim',sku:'SYP-'+k,label:`(2) ${k}`,depthIn:HDR_DEPTH[k],plies:2,allow:table[k],ok:false};
+}
+
+function studSku(size, lenFt, rake){
+  const li = lenFt*12;
+  return {sku:'SYP-'+size, mode:'piece'};
+}
+
+// T-intersections: where another wall on the same level butts into w (position along w)
+function teesOf(w){ const out=[]; const tw=(w.size==='2x6'?T6:T4)/2+0.06;
+  for(const o of WALLS){ if(o===w||o.axis===w.axis||Math.abs(o.base-w.base)>0.01) continue;
+    if(o.at<w.from-0.01||o.at>w.to+0.01) continue;
+    if(Math.abs(o.from-w.at)<=tw+0.25||Math.abs(o.to-w.at)<=tw+0.25) out.push({s:o.at,half:(o.size==='2x6'?T6:T4)/2,name:o.name}); }
+  return out; }
+const zoneOf = (op) => { const nj=op.w>6?2:1; const k=op.shared?0:1.5*IN; return [op.c-op.w/2-nj*1.5*IN-k, op.c+op.w/2+nj*1.5*IN+k]; };
+function zoneOk(w,op,others,tees){ const [a,b]=zoneOf(op); if(a<w.from+0.05||b>w.to-0.05) return false;
+  if(tees.some(t=>t.s+t.half>a-0.01&&t.s-t.half<b+0.01)) return false;
+  return others.every(o=>{ const [c,d]=zoneOf(o); return b<c-0.01||a>d+0.01; }); }
+const wallOC = w => (w.ext && w.size==='2x6' ? state.extOC : 16)*IN;
+function layoutPos(w){ const OC=wallOC(w); const pos=[w.from+0.75*IN]; for(let k=1; w.from+k*OC < w.to-1.5*IN; k++) pos.push(w.from+k*OC); pos.push(w.to-0.75*IN); return pos; }
+// Shift an opening ≤ 4" so the most layout studs fall inside its framing (king lands on layout)
+function snapOpenings(w){ if(!state.snap||!w.openings?.length) return; const tees=teesOf(w), pos=layoutPos(w);
+  w.openings = w.openings.map((op,i)=>{ if(op.fixed) return {...op,shift:0}; const others=w.openings.filter((_,j)=>j!==i);
+    const score = o => { const [a,b]=zoneOf(o); return pos.filter(s=>s>a-0.75*IN&&s<b+0.75*IN).length; };
+    let best={...op,shift:0}, bs=score(op);
+    for(let d=-4; d<=4.001; d+=0.5){ if(!d) continue; const c={...op,c:op.c+d*IN,shift:d}; if(!zoneOk(w,c,others,tees)) continue; const sc=score(c);
+      if(sc>bs || (sc===bs && Math.abs(d)<Math.abs(best.shift) && sc>score(op))){ best=c; bs=sc; } }
+    return best; }); }
+
+function genWall(w){
+  const layer=w.layer, lvl=w.lvl, t = w.size==='2x6'?T6:T4;
+  const rake = typeof w.top==='function';
+  const topAt = s => rake ? w.top(s) : w.top;
+  snapOpenings(w);
+  const OC = wallOC(w);
+  const L = w.to - w.from;
+  const P3 = (s,z,off=0) => w.axis==='x' ? [s, w.at+off, z] : [w.at+off, s, z];
+  const D3 = (along,up,th=t) => w.axis==='x' ? [along, th, up] : [th, along, up];
+  const nm = w.name;
+  // plates
+  const bSku = (w.pt?'PT-':'SYP-')+w.size;
+  add({layer,lvl,cat:'Plates',sku:bSku,mode:'lf',len:L,label:`Bottom plate${w.pt?' (PT on slab)':''} · ${nm}`,color:w.pt?COL.pt:COL.plate,g:{t:'box',c:P3((w.from+w.to)/2,w.base+P/2),s:D3(L,P)}});
+  if(!rake){
+    for(let i=0;i<2;i++) add({layer,lvl,cat:'Plates',sku:'SYP-'+w.size,mode:'lf',len:L,label:`${i?'Cap':'Top'} plate · ${nm}`,color:COL.plate,g:{t:'box',c:P3((w.from+w.to)/2,w.top-P/2-i*P),s:D3(L,P)}});
+  } else {
+    const pts=[w.from,...(w.breaks||[]).filter(b=>b>w.from&&b<w.to),w.to];
+    for(let k=0;k<pts.length-1;k++){ const s0=pts[k], s1=pts[k+1];
+      for(let i=0;i<2;i++){ const z0=topAt(s0)-P/2-i*P, z1=topAt(s1)-P/2-i*P; const len=Math.hypot(s1-s0,z1-z0);
+        add({layer,lvl,cat:'Plates',sku:'SYP-'+w.size,mode:'piece',len,label:`Raked ${i?'cap':'top'} plate · ${nm}`,color:COL.plate,
+          g:{t:'stick',a:P3(s0,z0),b:P3(s1,z1),w:t,d:P,axis:w.axis}}); } }
+  }
+  const z0 = w.base + P;
+  const studTop = s => topAt(s) - 2*P;
+  const addStud = (s,label,top=null,cat='Studs') => { const tp = top ?? studTop(s); const len = tp - z0; if(len<=0.05) return;
+    const ss = studSku(w.size,len,rake);
+    add({layer,lvl,cat,sku:ss.sku,mode:ss.mode,len,label:`${label} · ${nm}`,color:COL.stud,g:{t:'box',c:P3(s,(z0+tp)/2),s:D3(1.5*IN,len)}}); };
+  const zones=[];
+  // openings
+  for(const op of (w.openings||[])){
+    const Lo = op.c-op.w/2, Ro = op.c+op.w/2, nj = op.w>6?2:1;
+    zones.push(zoneOf(op));
+    const topMin = rake ? Math.min(topAt(Lo-0.3),topAt(Ro+0.3)) : w.top;
+    const avail = (topMin - 2*P - op.head)*12;
+    const hdr = pickHeader(w, op, avail);
+    const hLen = op.w + 2*nj*1.5*IN;
+    let hdrBot, hdrTop;
+    if(hdr.type==='flat'){ hdrBot = op.head; hdrTop = op.head + P;
+      add({layer,lvl,cat:'Headers',sku:hdr.sku,mode:'lf',len:hLen,label:`Flat header ${op.label} · ${nm}`,color:COL.header,g:{t:'box',c:P3(op.c,op.head+P/2),s:D3(hLen,P)}});
+    } else {
+      hdrTop = topMin - 2*P; hdrBot = hdrTop - hdr.depthIn/12;
+      const ply = hdr.type==='lvl'?1.75*IN:1.5*IN;
+      const offs = [-(t/2-ply/2), (t/2-ply/2)];
+      for(let i=0;i<hdr.plies;i++) add({layer,lvl,cat:'Headers',sku:hdr.sku,mode:hdr.type==='lvl'?'lfx':'lf',len:hLen,label:`Header ${hdr.label} over ${op.label} · ${nm}`,color:hdr.type==='lvl'?COL.lvl:COL.header,
+        g:{t:'box',c:P3(op.c,(hdrBot+hdrTop)/2,offs[i]),s:D3(hLen,hdr.depthIn/12,ply)}});
+      if(hdrBot - op.head > 1.5*IN){ // head flat + short cripples
+        add({layer,lvl,cat:'Shorts',sku:'SYP-'+w.size,mode:'lf',len:op.w,label:`Head flat ${op.label} · ${nm}`,color:COL.short,g:{t:'box',c:P3(op.c,op.head+P/2),s:D3(op.w,P)}});
+        const cl = hdrBot-(op.head+P);
+        if(cl>0.08) for(const s of cripplePos(Lo,Ro,w.from,OC)) add({layer,lvl,cat:'Shorts',sku:'SYP-'+w.size,mode:'lf',len:cl,label:`Cripple (head) · ${nm}`,color:COL.short,g:{t:'box',c:P3(s,op.head+P+cl/2),s:D3(1.5*IN,cl)}});
+      }
+    }
+    // jacks & kings
+    for(let i=0;i<nj;i++){ for(const s of [Lo-(i+0.5)*1.5*IN, Ro+(i+0.5)*1.5*IN]) addStud(s,`Jack stud ${op.label}`,hdr.type==='flat'?op.head:hdrBot); }
+    if(!op.shared) for(const s of [Lo-nj*1.5*IN-0.75*IN, Ro+nj*1.5*IN+0.75*IN]) addStud(s,`King stud ${op.label}`);
+    // cripples above header
+    for(const s of cripplePos(Lo-nj*1.5*IN,Ro+nj*1.5*IN,w.from,OC)){ const tp=studTop(s); const cl=tp-hdrTop; if(cl>0.08) add({layer,lvl,cat:'Shorts',sku:'SYP-'+w.size,mode:cl>4?'piece':'lf',len:cl,label:`Cripple (above header) · ${nm}`,color:COL.short,g:{t:'box',c:P3(s,hdrTop+cl/2),s:D3(1.5*IN,cl)}}); }
+    // sill + cripples below
+    if(op.type==='win'){
+      const sillPlies = op.w>=4 ? 2 : 1;
+      for(let i=0;i<sillPlies;i++) add({layer,lvl,cat:'Shorts',sku:'SYP-'+w.size,mode:'lf',len:op.w,label:`${sillPlies>1?'Double ':''}sill ${op.label} · ${nm}`,color:COL.short,g:{t:'box',c:P3(op.c,op.sill-P/2-i*P),s:D3(op.w,P)}});
+      const cl = op.sill - sillPlies*P - z0;
+      if(cl>0.08) for(const s of cripplePos(Lo,Ro,w.from,OC)) add({layer,lvl,cat:'Shorts',sku:'SYP-'+w.size,mode:'lf',len:cl,label:`Cripple (below sill) · ${nm}`,color:COL.short,g:{t:'box',c:P3(s,z0+cl/2),s:D3(1.5*IN,cl)}});
+    }
+    OPEN_REC.push({wall:nm,id:w.id,label:op.label,ro:op.w,head:op.head,avail,hdr,bearing:w.bearing,shift:op.shift||0,shared:!!op.shared,c:op.c,zone:zoneOf(op),tees:teesOf(w)});
+  }
+  // point-load columns
+  for(const s of (w.points||[])){ zones.push([s-3*IN,s+3*IN]); for(const d of [-1.5,0,1.5]) addStud(s+d*IN,'Beam bearing column'); }
+  // common studs on layout
+  for(const s of layoutPos(w)){ if(zones.some(([a,b])=>s>a-0.75*IN && s<b+0.75*IN)) continue; addStud(s,'Stud'); }
+  // corner / T backers
+  for(let i=0;i<(w.ends?.[0]||0);i++) addStud(w.from+(0.75+1.5*(i+1))*IN,'Corner/backer stud');
+  for(let i=0;i<(w.ends?.[1]||0);i++) addStud(w.to-(0.75+1.5*(i+1))*IN,'Corner/backer stud');
+  // fireblocking for tall rake walls (R602.8 — 10' max concealed space)
+  if(rake){ // only where studs exceed 10' — block sits 9'-6" up, always below the raked plate
+    let a=null,b=null; for(let s=w.from; s<=w.to+1e-6; s+=0.05){ if(studTop(s)-z0>10){ if(a===null) a=s; b=s; } }
+    if(a!==null && b-a>0.2){ const zb=z0+9.5, len=b-a; add({layer,lvl,cat:'Shorts',sku:'SYP-'+w.size,mode:'lf',len,label:`Fire blocking (studs > 10') · ${nm}`,color:COL.short,g:{t:'box',c:P3((a+b)/2,zb),s:D3(len,P)}}); } }
+  // sheathing
+  if(w.sheath) genSheath(w);
+  return L;
+}
+function cripplePos(a,b,origin,OC){ const out=[a+0.75*IN]; let k=Math.ceil((a-origin)/OC); for(;origin+k*OC < b-1.5*IN; k++){ const s=origin+k*OC; if(s>a+3*IN) out.push(s); } out.push(b-0.75*IN); return out; }
+
+function genSheath(w){
+  const sh=w.sheath, rake=typeof sh.top==='function', topAt = s=>rake?sh.top(s):sh.top;
+  const xs=[sh.from,...(sh.breaks||[]).filter(b=>b>sh.from&&b<sh.to),sh.to];
+  const pts=[[sh.from,sh.z0],[sh.to,sh.z0]]; for(let i=xs.length-1;i>=0;i--) pts.push([xs[i],topAt(xs[i])]);
+  let area=0; for(let i=0;i<pts.length;i++){ const [x1,y1]=pts[i],[x2,y2]=pts[(i+1)%pts.length]; area+=x1*y2-x2*y1; } area=Math.abs(area)/2;
+  const holes=[];
+  for(const op of (w.openings||[])){ const a=op.c-op.w/2, b=op.c+op.w/2; if(a<sh.from||b>sh.to) continue; const lo = op.sill ?? sh.z0+0.04; holes.push([[a,lo],[b,lo],[b,op.head],[a,op.head]]); area -= op.w*(op.head-lo); }
+  add({layer:'wsheath',lvl:w.lvl,cat:'Sheathing',sku:'OSB-716',mode:'area',area,label:`7/16" OSB · ${w.name} (${num(area)} sf net)`,color:COL.osb,
+    g:{t:'shape',axis:w.axis,outer:sh.outer+sh.side*0.035,pts,holes}});
+}
+
+function genFloor(){
+  const J = {syp:{sku:'SYP-2x12',mode:'piece',d:11.25,oc:16,w:1.5,name:'2x12 #2 SYP',rim:'SYP-2x12',rimMode:'lf',rimT:1.5},
+             ij:{sku:'IJ-11.875',mode:'piece',d:11.875,oc:16,w:2.0625,name:'11-7/8" I-joist',rim:'RIM-11.875',rimMode:'lfx',rimT:1.125},
+             ft:{sku:'FT-12',mode:'lfx',d:12,oc:24,w:3.5,name:'12" open-web floor truss',rim:'RIM-11.875',rimMode:'lfx',rimT:1.125,truss:true},
+             ft16:{sku:'FT-16',mode:'lfx',d:16,oc:24,w:3.5,name:'16" open-web floor truss',rim:'RIM-11.875',rimMode:'lfx',rimT:1.125,truss:true}}[state.joist];
+  const layer='floor', lvl=1, top=SUB2-0.719*IN, bot=top-J.d*IN, zc=(top+bot)/2, dz=J.d*IN, rimT=J.rimT*IN, OC=J.oc*IN;
+  const BEAM_Y=12.0, BW=5.25*IN;
+  const xsAll=[J.w*IN/2]; for(let k=1;k*OC<WD-0.4;k++) xsAll.push(k*OC); xsAll.push(WD-J.w*IN/2);
+  let hangers=0;
+  const joist=(X,y0,y1,label)=>{ const len=y1-y0;
+    if(!J.truss){ add({layer,lvl,cat:'Joists',sku:J.sku,mode:J.mode,len,label:`${J.name} ${label}`,color:COL.joist,g:{t:'box',c:[X,(y0+y1)/2,zc],s:[J.w*IN,len,dz]}}); return; }
+    // open-web floor truss: 4x2 chords laid flat, diagonal webs, open duct chase panel mid-span
+    add({layer,lvl,cat:'Floor trusses',sku:J.sku,mode:'lfx',len,label:`${J.name} ${label}`});
+    const tag=`${J.name} ${label}`, ch=1.5*IN, zt=top-ch/2, zb=bot+ch/2, cy=(y0+y1)/2, half=J.d>=16?1.25:0.9;
+    const V=(a,b,l)=>add({layer,lvl,cat:'Floor trusses',sku:null,mode:'none',label:`${tag} · ${l}`,color:COL.truss,g:{t:'stick',a:[X,a[0],a[1]],b:[X,b[0],b[1]],w:3.5*IN,d:1.5*IN}});
+    V([y0,zt],[y1,zt],'top chord'); V([y0,zb],[y1,zb],'bottom chord');
+    V([y0+0.12,zb],[y0+0.13,zt],'end vertical'); V([y1-0.12,zb],[y1-0.13,zt],'end vertical');
+    V([cy-half,zb],[cy-half+0.01,zt],'chase vertical'); V([cy+half,zb],[cy+half-0.01,zt],'chase vertical');
+    for(const [a,b] of [[y0+0.13,cy-half],[cy+half,y1-0.13]]){ const n=Math.max(1,Math.round((b-a)/2.5)), st=(b-a)/n;
+      for(let i=0;i<n;i++){ const ya=a+i*st, yb=ya+st; V(i%2?[ya,zt]:[ya,zb], i%2?[yb,zb]:[yb,zt],'web'); } }
+  };
+  const SG=stairGeom(), HOLE=SG.ext, HX0=SG.X0-0.06, HY=SG.YT+0.04, HDW=3.5*IN;   // stair hole: B1 stops at a post by the stair, trimmer + header frame the opening
+  for(const X of xsAll){ if(HOLE && X>HX0-0.65){ if(X>HX0+0.2){ joist(X,HY+HDW,DP-rimT,'· rear bay (off stair header)'); hangers++; } continue; } joist(X,BEAM_Y+BW/2,DP-rimT,'· rear bay'); hangers++; }
+  if(HOLE){ for(const X of [HX0-J.w*IN/2, HX0-1.5*J.w*IN]) joist(X,BEAM_Y+BW/2,DP-rimT,'· double trimmer at stair opening'); hangers+=2;
+    for(let i=0;i<2;i++) add({layer,lvl,cat:'Beam',sku:'LVL-11.875',mode:'lfx',len:WD-rimT-HX0,label:'Stair header · (2) 1-3/4×11-7/8 LVL (hangers to trimmer + rim)',color:COL.lvl,g:{t:'box',c:[(HX0+WD-rimT)/2,HY+(i+0.5)*1.75*IN,top-11.875*IN/2],s:[WD-rimT-HX0,1.75*IN,11.875*IN]}});
+    hangers+=2; }
+  for(const X of xsAll.filter(x=>x<8.6)){ joist(X,rimT,BEAM_Y-BW/2,'· loft/storage bay'); hangers++; }
+  for(const X of [8.94-J.w*IN, 8.94]) joist(X,rimT,BEAM_Y-BW/2,'· double trimmer at open-below');
+  // rim / band
+  const rim=(c,s,len,label)=>add({layer,lvl,cat:'Rim',sku:J.rim,mode:J.rimMode,len,label,color:COL.rim,g:{t:'box',c,s}});
+  rim([WD/2,rimT/2,zc],[WD,rimT,dz],WD,'Front rim / band (spans open-below)');
+  rim([WD/2,DP-rimT/2,zc],[WD,rimT,dz],WD,'Rear rim');
+  { const ye=HOLE?HY:BEAM_Y-BW/2; rim([WD-rimT/2,ye/2,zc],[rimT,ye,dz],ye,HOLE?'Right band at open-below + stair opening':'Right band at open-below'); }
+  // flush beam B1
+  const BL=HOLE?HX0-1.5*J.w*IN*0-0.0:WD; STATS.b1End=BL; STATS.stairHole=HOLE;
+  for(let i=0;i<3;i++) add({layer,lvl,cat:'Beam',sku:'LVL-11.875',mode:'lfx',len:BL,label:`Flush beam B1 · (3) 1-3/4×11-7/8 LVL, 2 spans${HOLE?' (stops at the stair)':''}`,color:COL.lvl,g:{t:'box',c:[BL/2,BEAM_Y-BW/2+(i+0.5)*1.75*IN,top-11.875*IN/2],s:[BL,1.75*IN,11.875*IN]}});
+  if(HOLE){ add({layer,lvl:0,cat:'Posts',sku:'PSL-5.25',mode:'lfx',len:top-11.875*IN,label:'Column P2 at the stair (B1 end + trimmer) · 5-1/4" PSL',color:COL.lvl,g:{t:'box',c:[BL-2.625*IN,BEAM_Y,(top-11.875*IN)/2],s:[5.25*IN,5.25*IN,top-11.875*IN]}}); }
+  add({layer,lvl:0,cat:'Posts',sku:'PSL-5.25',mode:'lfx',len:top-11.875*IN,label:'Column P1 under beam B1 · 5-1/4" PSL',color:COL.lvl,g:{t:'box',c:[14.67,BEAM_Y,(top-11.875*IN)/2],s:[5.25*IN,5.25*IN,top-11.875*IN]}});
+  // subfloor 4x8 tiles, long edge across joists, staggered
+  const regions=HOLE?[[0,HX0,BEAM_Y,DP],[HX0,WD,HY,DP],[0,9.0,0,BEAM_Y]]:[[0,WD,BEAM_Y,DP],[0,9.0,0,BEAM_Y]];
+  let area=0;
+  for(const [x0,x1,y0,y1] of regions){ let r=0; for(let yt=y1; yt>y0+0.01; yt-=4, r++){ const yb=Math.max(y0,yt-4); const off=(r%2)*4;
+      for(let xs=x0-off; xs<x1-0.01; xs+=8){ const a=Math.max(x0,xs), b=Math.min(x1,xs+8); if(b-a<0.05) continue; const ar=(b-a)*(yt-yb); area+=ar;
+        add({layer,lvl,cat:'Subfloor',sku:'SUB-2332',mode:'area',area:ar,label:'23/32" T&G subfloor, glued & screwed',color:COL.sub,g:{t:'box',c:[(a+b)/2,(yb+yt)/2,top+0.03],s:[b-a-0.03,yt-yb-0.03,0.719*IN],op:0.92}}); } } }
+  if(J.truss){ for(const [y,x0,x1] of [[(BEAM_Y+DP)/2,0,WD],[BEAM_Y/2,0,9.0]]) add({layer,lvl,cat:'Strongback',sku:'SYP-2x6',mode:'lf',len:x1-x0,label:'Strongback 2x6 on edge (floor-truss bracing, ≤ 10\' o.c.)',color:COL.short,g:{t:'box',c:[(x0+x1)/2,y+(J.d>=16?1.6:1.2),bot+0.35],s:[x1-x0,1.5*IN,5.5*IN]}}); }
+  STATS.floorTruss=!!J.truss;
+  STATS.floorArea=area; STATS.floorBot=bot; STATS.joistHangers=hangers; STATS.trimmerHangers=1; STATS.joistName=J.name; STATS.joistDepth=J.d; STATS.joistOC=J.oc;
+  STATS.joistSpan = DP-rimT-(BEAM_Y+BW/2);
+  // stair: L-shaped per A-1/A-2 — short flight from the living room up to a landing in the front-right corner, then a straight flight toward the rear to the loft
+  { const S=stairGeom(), sl='Stair', D=0.75*IN, rimTop=S.HL-D, ph=rimTop-5.5*IN;
+    const stg=(a,b,l)=>add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x12',mode:'piece',len:stickLen(a,b)+0.75,label:l,color:COL.joist,g:{t:'stick',a,b,w:1.5*IN,d:11.25*IN}});
+    for(const X of [S.X0+0.75*IN,(S.X0+S.X1)/2,S.X1-0.75*IN]) stg([X,S.YL,rimTop-0.47],[X,S.YT,top-0.47],`Stair stringer 2x12 · upper flight (${S.nU}R / ${S.nUT}T)`);
+    if(S.nLT>0) for(const Y of [S.Y0+0.75*IN,(S.Y0+S.YL)/2,S.YL-0.75*IN]) stg([S.XS+0.35,Y,0.47],[S.X0,Y,rimTop-0.47],`Stair stringer 2x12 · lower flight (${S.nL}R / ${S.nLT}T)`);
+    if(S.nL===1){ // one-step landing: PT 2x8 ripped to height, laid on the slab, 16" o.c., 23/32" deck
+      const W=S.W, hh=rimTop, zr=hh/2, P='PT-2x8';
+      add({layer:'l1int',lvl:0,cat:sl,sku:P,mode:'piece',len:W,label:`Landing rim PT 2x8 ripped to ${num(hh*12,2)}" (front wall)`,color:COL.pt,g:{t:'box',c:[S.X0+W/2,S.Y0+0.75*IN,zr],s:[W,1.5*IN,hh]}});
+      add({layer:'l1int',lvl:0,cat:sl,sku:P,mode:'piece',len:W,label:`Landing rim PT 2x8 ripped (riser to upper flight)`,color:COL.pt,g:{t:'box',c:[S.X0+W/2,S.YL-0.75*IN,zr],s:[W,1.5*IN,hh]}});
+      for(const X of [S.X0+0.75*IN,S.X1-0.75*IN]) add({layer:'l1int',lvl:0,cat:sl,sku:P,mode:'piece',len:W-3*IN,label:X<S.X0+1?'Landing rim PT 2x8 ripped (the one step, living-room side)':'Landing rim PT 2x8 ripped (right wall)',color:COL.pt,g:{t:'box',c:[X,S.Y0+W/2,zr],s:[1.5*IN,W-3*IN,hh]}});
+      for(let X=S.X0+16*IN; X<S.X1-6*IN; X+=16*IN) add({layer:'l1int',lvl:0,cat:sl,sku:P,mode:'piece',len:W-3*IN,label:'Landing sleeper PT 2x8 ripped @ 16"',color:COL.pt,g:{t:'box',c:[X,S.Y0+W/2,zr],s:[1.5*IN,W-3*IN,hh]}});
+      add({layer:'l1int',lvl:0,cat:sl,sku:'SUB-2332',mode:'area',area:W*W,label:'Landing deck 23/32" T&G, glued & screwed',color:COL.sub,g:{t:'box',c:[S.X0+W/2,S.Y0+W/2,rimTop+D/2],s:[W-0.02,W-0.02,D]}});
+    } else {
+    // landing platform: 2x6 rim + joists @ 16", rims at the two exterior walls act as ledgers, 2x4 pony walls under the open sides
+    const W=S.W, zr=rimTop-2.75*IN;
+    add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x6',mode:'piece',len:W,label:'Landing ledger 2x6 (front wall)',color:COL.rim,g:{t:'box',c:[S.X0+W/2,S.Y0+0.75*IN,zr],s:[W,1.5*IN,5.5*IN]}});
+    add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x6',mode:'piece',len:W,label:'Landing rim 2x6 (top of upper flight)',color:COL.rim,g:{t:'box',c:[S.X0+W/2,S.YL-0.75*IN,zr],s:[W,1.5*IN,5.5*IN]}});
+    add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x6',mode:'piece',len:W-3*IN,label:'Landing ledger 2x6 (right wall)',color:COL.rim,g:{t:'box',c:[S.X1-0.75*IN,S.Y0+W/2,zr],s:[1.5*IN,W-3*IN,5.5*IN]}});
+    add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x6',mode:'piece',len:W-3*IN,label:'Landing rim 2x6 (top of lower flight)',color:COL.rim,g:{t:'box',c:[S.X0+0.75*IN,S.Y0+W/2,zr],s:[1.5*IN,W-3*IN,5.5*IN]}});
+    for(let X=S.X0+16*IN; X<S.X1-6*IN; X+=16*IN) add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x6',mode:'piece',len:W-3*IN,label:'Landing joist 2x6 @ 16"',color:COL.joist,g:{t:'box',c:[X,S.Y0+W/2,zr],s:[1.5*IN,W-3*IN,5.5*IN]}});
+    add({layer:'l1int',lvl:0,cat:sl,sku:'SUB-2332',mode:'area',area:W*W,label:'Landing deck 23/32" T&G, glued & screwed',color:COL.sub,g:{t:'box',c:[S.X0+W/2,S.Y0+W/2,rimTop+D/2],s:[W-0.02,W-0.02,D]}});
+    // pony walls (PT bottom plate on slab, double top plate)
+    const pw=(axis,at,a0,a1,lab)=>{ const L=a1-a0, c=(a0+a1)/2, st=ph-3*1.5*IN;
+      const bx=(cc,ss)=>axis==='y'?{c:[at,cc[0],cc[1]],s:[ss[1],ss[0],ss[2]]}:{c:[cc[0],at,cc[1]],s:[ss[0],ss[1],ss[2]]};
+      add({layer:'l1int',lvl:0,cat:sl,sku:'PT-2x4',mode:'piece',len:L,label:`Landing pony wall PT bottom plate (${lab})`,color:COL.pt,g:{t:'box',...bx([c,0.75*IN],[L,3.5*IN,1.5*IN])}});
+      for(const k of [1,2]) add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x4',mode:'piece',len:L,label:`Landing pony wall top plate (${lab})`,color:COL.plate,g:{t:'box',...bx([c,ph-(k-0.5)*1.5*IN],[L,3.5*IN,1.5*IN])}});
+      const xs=[a0+0.75*IN]; for(let u=a0+16*IN; u<a1-3*IN; u+=16*IN) xs.push(u); xs.push(a1-0.75*IN);
+      for(const u of xs) add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x4',mode:'piece',len:st,label:`Landing pony wall stud (${lab})`,color:COL.stud,g:{t:'box',...bx([u,1.5*IN+st/2],[1.5*IN,3.5*IN,st])}}); };
+    pw('y',S.X0+1.75*IN,S.Y0,S.YL-3.5*IN,'living side');
+    pw('x',S.YL-1.75*IN,S.X0,S.X1,'under upper flight');
+    }
+    if(S.nL<=2 && S.ext){ const K=stairCode(S), zr=y=>K.zAt(y)+34.5*IN-0.47;
+      // handrail blocking: 2x6 flat in the right-wall stud bays along the rail line (rail 34"-38" above nosings, R311.7.8)
+      add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x6',mode:'piece',len:Math.hypot(S.YT-S.YL,zr(S.YT)-zr(S.YL)),label:'Handrail blocking 2x6 (right wall, along the rail line)',color:COL.short,g:{t:'stick',a:[S.X1+0.75*IN,S.YL,zr(S.YL)+0.47],b:[S.X1+0.75*IN,S.YT,zr(S.YT)+0.47],w:1.5*IN,d:5.5*IN}});
+      // bath soffit under the top of the flight: 2x4 ladder, 1/2" GWB (also the R302.7 under-stair protection)
+      if(K.over>0){ const y0=K.yb, y1=S.YT+0.04, h=PLATE1-K.zs;
+        for(const X of [S.X0+0.75*IN,(S.X0+S.X1)/2,S.X1-0.75*IN]) add({layer:'l1int',lvl:0,cat:sl,sku:'SYP-2x4',mode:'piece',len:y1-y0,label:'Bath soffit ladder 2x4 (under stair top)',color:COL.short,g:{t:'box',c:[X,(y0+y1)/2,K.zs+0.75*IN],s:[1.5*IN,y1-y0,1.5*IN]}});
+        add({layer:'drywall',lvl:0,cat:'Drywall',sku:'GWB-12',mode:'area',area:S.W*(y1-y0)+S.W*h,label:`1/2" drywall · bath soffit under stair (${ftin(K.zs)} AFF)`,color:'#dfe6ec',g:{t:'box',c:[(S.X0+S.X1)/2,(y0+y1)/2,K.zs-DW/2],s:[S.W,y1-y0,DW],op:0.9}}); }
+      // guards (finish carpentry, shown for clearance): open side of the flight once > 30" up, and around the loft stair opening
+      const y30=S.YL+(30*IN-S.HL)/S.rh*S.tU, GC='#c9b48f';
+      add({layer:'furn',lvl:0,cat:'Furnishings',sku:null,mode:'none',label:'Stair guard 36" (open side of flight, R312.1)',color:GC,g:{t:'stick',a:[S.X0-0.05,y30,K.zAt(y30)+3.0],b:[S.X0-0.05,BEAM_FACE(),K.zAt(BEAM_FACE())+3.0],w:0.12,d:0.12}});
+      add({layer:'furn',lvl:2,cat:'Furnishings',sku:null,mode:'none',label:'Loft guard 36" at stair opening (R312.1)',color:GC,g:{t:'box',c:[S.X0-0.12,(BEAM_FACE()+S.YT)/2,SUB2+1.5],s:[0.12,S.YT-BEAM_FACE(),3.0],op:0.6}}); }
+    STATS.stair=S; }
+}
+
+function stickLen(a,b){ return Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]); }
+function genTrusses(){
+  const layer='trusses', lvl=3; let n=0;
+  const yRi=DP-T6, yFi=T6;                                   // inside faces of rear wall / front knee wall
+  const tcC = Y => tc(Y) - plumb(TC_D/2,pitchAt(Y));         // top-chord centerline
+  const bcPk = RBC;                                          // bottom-chord peak (bottom face)
+  const bcBotR = bc, bcBotF = bc;
+  const MET='#b9c3cd';
+  for(let X=2; X<=28.01; X+=2){ n++;
+    add({layer,lvl,cat:'Trusses',sku:'TRUSS-MAIN',mode:'ea',qty:1,label:`Truss T${n}`});
+    const tag=`Truss T${n} (asym. scissor, 24" o.c.)`;
+    const S=(a,b,label,d=3.5)=>add({layer,lvl,cat:'Trusses',sku:null,mode:'none',label:`${tag} · ${label}`,color:COL.truss,g:{t:'stick',a:[X,a[0],a[1]],b:[X,b[0],b[1]],w:1.5*IN,d:d*IN}});
+    const B=(c,s,label,color=COL.truss)=>add({layer,lvl,cat:'Trusses',sku:null,mode:'none',label:`${tag} · ${label}`,color,g:{t:'box',c,s}});
+    // top chords: overhang tail → peak, bottom edge passes through the outside top corner of each plate
+    S([DP+1,tcC(DP+1)],[YR,RTC-plumb(TC_D/2,PB_)],'top chord, rear 4/12 (2x4)');
+    S([-1,tcC(-1)],[YR,RTC-plumb(TC_D/2,PF_)],'top chord, front 8/12 (2x4)');
+    // bottom chord: level bearing segment across the full 5-1/2" plate, then scissor slope to the peak
+    B([X,(yRi+DP)/2,PLATE2B+BC_D/2],[1.5*IN,T6,BC_D],'bottom chord level bearing on rear plate (5-1/2")');
+    B([X,(0+yFi)/2,PLATE2F+BC_D/2],[1.5*IN,T6,BC_D],'bottom chord level bearing on knee-wall plate (5-1/2")');
+    S([yRi,PLATE2B+BC_D/2],[YR,bcPk+BC_D/2],'bottom chord, rear scissor slope (2x4)');
+    S([yFi,PLATE2F+BC_D/2],[YR,bcPk+BC_D/2],'bottom chord, front scissor slope (2x4)');
+    // webs
+    const fm=(yFi+YR)/2, rm=(yRi+YR)/2, wz=Y=>bcBotF(Y)+BC_D, wzr=Y=>bcBotR(Y)+BC_D, tb=Y=>tc(Y)-plumb(TC_D,pitchAt(Y));
+    S([YR+0.01,bcPk+BC_D],[YR-0.01,RTC-plumb(TC_D,PF_)],'king post web');
+    S([fm,wz(fm)],[fm+0.01,tb(fm)],'web'); S([fm,wz(fm)],[YR-2.4,tb(YR-2.4)],'web'); S([fm,wz(fm)],[2.4,tb(2.4)],'web');
+    S([rm,wzr(rm)],[rm+0.01,tb(rm)],'web'); S([rm,wzr(rm)],[YR+2.0,tb(YR+2.0)],'web');
+    // galvanized connector plates (both faces) at heels and peak
+    for(const side of [-1,1]){ const xo=X+side*0.07;
+      for(const [y,z,h] of [[DP-0.2,PLATE2B+0.22,0.42],[0.2,PLATE2F+0.24,0.46],[YR,(RTC+bcPk)/2,0.9]])
+        add({layer,lvl,cat:'Trusses',sku:null,mode:'none',label:`${tag} · steel truss plate`,color:MET,g:{t:'box',c:[xo,y,z],s:[0.012,0.55,h]}}); }
+    // H2.5A uplift ties: wrap truss to double top plate on the inside face, both bearings
+    for(const [y,z] of [[yRi-0.01,PLATE2B-0.12],[yFi+0.01,PLATE2F-0.12]])
+      add({layer,lvl,cat:'Trusses',sku:null,mode:'none',label:'H2.5A hurricane tie, truss to double top plate',color:MET,g:{t:'box',c:[X+0.1,y,z],s:[0.16,0.02,0.5]}});
+  }
+  STATS.trusses=n;
+  // rake ladders + fly rafters (12" gable overhang)
+  for(const [xf,xin] of [[-1+0.75*IN,2-0.75*IN],[WD+1-0.75*IN,WD-2+0.75*IN]]){
+    for(const [y0] of [[-1],[DP+1]]){ const pc=y0<YR?PF_:PB_, a=[xf,y0,tc(y0)-plumb(2.75/12,pc)], b=[xf,YR,RTC-plumb(2.75/12,pc)];
+      add({layer,lvl,cat:'Rake',sku:'SYP-2x6',mode:'piece',len:stickLen(a,b),label:'Fly rafter (gable overhang)',color:COL.rafter,g:{t:'stick',a,b,w:1.5*IN,d:5.5*IN}});
+      const dir = y0<YR?1:-1; for(let y=y0+dir*0.6; dir>0? y<YR-0.3 : y>YR+0.3; y+=dir*2){ const xc=(xf+xin)/2, len=Math.abs(xin-xf);
+        add({layer,lvl,cat:'Rake',sku:'SYP-2x4',mode:'lf',len,label:'Rake ladder lookout @ 24" (over dropped gable plate, into first truss)',color:COL.rafter,g:{t:'box',c:[xc,y,tc(y)-plumb(1.75/12,pitchAt(y))],s:[len,1.5*IN,3.5*IN]}}); } }
+  }
+  // sub-fascia & vented eave blocking
+  for(const y of [-1, DP+1]) add({layer,lvl,cat:'Fascia',sku:'SYP-2x6',mode:'lf',len:WD+2,label:'Sub-fascia (main eave)',color:COL.rafter,g:{t:'box',c:[WD/2,y,tc(y)-0.24],s:[WD+2,1.5*IN,5.5*IN]}});
+  // vented 2x4 eave blocks, one per truss bay, on the inside edge of each bearing plate
+  const bays=[[0.5,2-0.75*IN]]; for(let x=2; x<28; x+=2) bays.push([x+0.75*IN,x+2-0.75*IN]); bays.push([28+0.75*IN,WD-0.5]);
+  for(const [y,z] of [[T6-0.75*IN,PLATE2F+1.75*IN],[DP-T6+0.75*IN,PLATE2B+1.75*IN]]) for(const [x0,x1] of bays)
+    add({layer,lvl,cat:'Blocking',sku:'SYP-2x4',mode:'lf',len:x1-x0,label:'Vented 2x4 eave block between trusses (inside edge of plate)',color:COL.short,g:{t:'box',c:[(x0+x1)/2,y,z],s:[x1-x0,1.5*IN,3.5*IN]}});
+  // loft partitions under the trusses: clips where walls cross trusses, flat 2x4 nailers where walls run between trusses
+  let clips=0;
+  for(const w of WALLS){ if(w.layer!=='l2walls'||w.ext) continue;
+    if(w.axis==='x'){ for(let x=2;x<=28.01;x+=2) if(x>w.from&&x<w.to){ clips++; add({layer,lvl,cat:'Trusses',sku:null,mode:'none',label:`Partition-to-truss clip (STC) · ${w.name}`,color:'#b9c3cd',g:{t:'box',c:[x+0.09,w.at,bc(w.at)-0.05],s:[0.03,0.25,0.22]}}); } }
+    else { for(let y=w.from+0.75*IN; y<w.to; y+=2){ clips++; add({layer,lvl,cat:'Blocking',sku:'SYP-2x4',mode:'lf',len:2-1.5*IN,label:`Flat 2x4 nailer between trusses over ${w.name}`,color:COL.short,g:{t:'box',c:[Math.floor(w.at/2)*2+1,y,bc(y)+0.07],s:[2-1.5*IN,3.5*IN,1.5*IN]}}); } } }
+  STATS.trussClips=clips;
+  // permanent lateral bracing per BCSI-B3 (CLR on bottom chords + diagonals)
+  for(const y of [YR/2, (DP+YR)/2]) add({layer,lvl,cat:'Bracing',sku:'SYP-2x4',mode:'lf',len:26,label:'Continuous lateral restraint (BCSI-B3)',color:'#9fb3c8',g:{t:'box',c:[15,y,bc(y)+0.05],s:[26,3.5*IN,1.5*IN]}});
+  add({layer,lvl,cat:'Bracing',sku:'SYP-2x4',mode:'lf',len:4*13,label:'Diagonal truss bracing (4 runs)'});
+}
+
+function genShed(){
+  const layer='shed', lvl=1; const yL=DP+1.5*IN, yE=BK+1;
+  add({layer,lvl,cat:'Ledger',sku:'PT-2x8',mode:'lf',len:WD,label:'Shed ledger on the loft wall studs (structural screws + solid blocking)',color:COL.pt,g:{t:'box',c:[WD/2,DP+0.75*IN,SHED_SEAT+5.5*IN-7.25*IN/2+0.02],s:[WD,1.5*IN,7.25*IN]}});
+  const xs=[0.75*IN]; for(let x=2;x<=28.01;x+=2) xs.push(x); xs.push(WD-0.75*IN);
+  for(const X of xs){ const ph=plumb(2.75/12,REAR_P), a=[X,yL,shedSeat(yL)+ph], b=[X,yE,shedSeat(yE)+ph];
+    add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(a,b),label:'Shed rafter 2x6 @ 24" (3/12)',color:COL.rafter,g:{t:'stick',a,b,w:1.5*IN,d:5.5*IN}}); }
+  STATS.shedRafters=xs.length;
+  // flat bedroom ceiling: 2x6 ceiling joists @ 16" on the 9'-0" plates, main rear wall to bedroom rear wall
+  { let n=0; const y0=DP-T6, y1=BK, len=y1-y0;
+    for(let X=14.5+T6+0.75*IN; X<WD-T6; X+=16*IN){ n++; add({layer,lvl,cat:'Ceiling joists',sku:'SYP-2x6',mode:'piece',len,label:'Bedroom ceiling joist 2x6 @ 16" (flat 9\'-0" ceiling)',color:COL.joist,g:{t:'box',c:[X,(y0+y1)/2,PLATE1+2.75/12],s:[1.5*IN,len-0.02,5.5*IN]}}); }
+    add({layer,lvl,cat:'Ceiling joists',sku:'SYP-2x6',mode:'piece',len,label:'Bedroom ceiling joist 2x6 (at right wall)',color:COL.joist,g:{t:'box',c:[WD-T6-0.75*IN,(y0+y1)/2,PLATE1+2.75/12],s:[1.5*IN,len-0.02,5.5*IN]}});
+    STATS.bedJoists=n+1; }
+  // Patio beam: double-ply #2 SYP, bearing on the corner post and the bedroom wall (optional mid post)
+  const yb=BK-1.5*IN, bl=14.5+T6, pX=[0.229]; if(state.patioPosts===2) pX.push((0.229+14.5)/2);
+  const pSup=[...pX,14.5+T6/2], pSpans=pSup.slice(1).map((x,i)=>x-pSup[i]);
+  const pTrib=(BK-DP)/2+1, pTL=pTrib*(PORCH_DL+PORCH_LL), pLL=pTrib*PORCH_LL;
+  const pBeam=sizePorchBeam(Math.max(...pSpans),pTL,pLL,[2]);
+  const pd=BEAM_D[pBeam.size]*IN, bt=shedSeat(yb), bb=bt-pd;
+  for(let k=0;k<pSpans.length;k++){ const a=k===0?0:pSup[k], b2=k===pSpans.length-1?bl:pSup[k+1];
+    for(let i=0;i<2;i++) add({layer,lvl,cat:'Beam',sku:'SYP-'+pBeam.size,mode:'piece',len:b2-a,label:`Patio beam · (2) ${pBeam.size} #2 SYP`,color:COL.header,g:{t:'box',c:[(a+b2)/2,BK-(i+0.5)*1.5*IN,(bt+bb)/2],s:[b2-a-0.01,1.5*IN,pd]}}); }
+  for(const X of pX) add({layer,lvl,cat:'Posts',sku:'PT-6x6',mode:'piece',len:bb,label:X<1?'Patio corner post 6x6 PT':'Patio mid post 6x6 PT',color:COL.post,g:{t:'box',c:[X,BK-0.229,bb/2],s:[5.5*IN,5.5*IN,bb]}});
+  const alt3=sizePorchBeam(Math.max(...pSpans),pTL,pLL,[3]), altPost=sizePorchBeam(Math.max(...pSpans)/2,pTL,pLL,[2]);
+  STATS.patioBeam={...pBeam,spans:pSpans,trib:pTrib,W_TL:pTL,W_LL:pLL,check:beamCheck(pBeam.size,2,Math.max(...pSpans),pTL,pLL),alt3,altPost};
+  add({layer,lvl,cat:'Fascia',sku:'SYP-2x6',mode:'lf',len:WD,label:'Sub-fascia (shed eave)',color:COL.rafter,g:{t:'box',c:[WD/2,yE,shedSeat(yE)+0.2],s:[WD,1.5*IN,5.5*IN]}});
+  add({layer,lvl,cat:'Blocking',sku:'SYP-2x6',mode:'lf',len:WD,label:'Rafter blocking over bearing'});
+  STATS.shedArea = WD*(yE-DP)*Math.hypot(1,REAR_P); 
+  STATS.ledgerLF = (STATS.ledgerLF||0)+WD; STATS.posts=(STATS.posts||0)+pX.length;
+}
+
+// #2 SYP reference design values (SPIB 2013): Fb by size, Fv 175 psi, E 1,400,000 psi; roof live load CD = 1.25
+const PORCH_DL = 15, PORCH_LL = 20;                                   // psf: roof + shingles + ceiling / roof live (no snow)
+const BEAM_D = {'2x6':5.5,'2x8':7.25,'2x10':9.25,'2x12':11.25}, BEAM_FB = {'2x6':1000,'2x8':925,'2x10':800,'2x12':750};
+function beamCheck(size,plies,Lft,wTL,wLL){
+  const b=1.5*plies, d=BEAM_D[size], S=b*d*d/6, I=b*d**3/12, A=b*d, L=Lft*12, E=1.4e6, CD=1.25;
+  const M=wTL*Lft*Lft/8*12, V=wTL*Lft/2;                                 // in-lb, lb (simple span between posts)
+  const fb=M/S, Fb=BEAM_FB[size]*CD, fv=1.5*V/A, Fv=175*CD;
+  const dLL=5*(wLL/12)*L**4/(384*E*I), dTL=5*(wTL/12)*L**4/(384*E*I);
+  const ok = fb<=Fb && fv<=Fv && dLL<=L/240 && dTL<=L/180;
+  return {Lft,fb,Fb,fv,Fv,dLL,dTL,rLL:L/dLL,rTL:L/dTL,ok};
+}
+function sizePorchBeam(Lmax,wTL,wLL,pliesList=[2,3]){
+  for(const plies of pliesList) for(const size of ['2x6','2x8','2x10','2x12']){ const c=beamCheck(size,plies,Lmax,wTL,wLL); if(c.ok) return {size,plies,ok:true}; }
+  return {size:'2x12',plies:pliesList[pliesList.length-1],ok:false};
+}
+function genPorch(){
+  const layer='porch', lvl=1, x0=1+11/12, x1=WD-(1+11/12), yE=-9, yB=-7.75;
+  add({layer,lvl,cat:'Ledger',sku:'PT-2x8',mode:'lf',len:x1-x0,label:'Porch ledger, bolted through rim',color:COL.pt,g:{t:'box',c:[WD/2,-0.75*IN,PORCH_SEAT+5.5*IN-7.25*IN/2+0.02],s:[x1-x0,1.5*IN,7.25*IN]}});
+  const xs=[]; for(let x=2;x<=28.01;x+=2) xs.push(x);
+  for(const X of xs){ const ph=plumb(2.75/12,SHED_P), a=[X,-1.5*IN,porchSeat(-1.5*IN)+ph], b=[X,yE,porchSeat(yE)+ph];
+    add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(a,b),label:'Porch rafter 2x6 @ 24" (2/12)',color:COL.rafter,g:{t:'stick',a,b,w:1.5*IN,d:5.5*IN}}); }
+  STATS.porchRafters=xs.length;
+  const XD=11+11/12, ENTRY_W=6;                                       // step posts 6'-0" o.c., centered on the 3080 entry door
+  const posts=[x0+0.25, XD-ENTRY_W/2, XD+ENTRY_W/2, x1-0.25];
+  if(state.porchPosts===5) posts.splice(3,0,(posts[2]+posts[3])/2); // optional post splitting the long bay
+  // Built-up #2 SYP beam, one depth for the whole run, spliced over posts; sized for the worst bay
+  const trib = (-yB)/2 + (yB-yE);                                    // half the rafter span + overhang
+  const W_TL = trib*(PORCH_DL+PORCH_LL), W_LL = trib*PORCH_LL;       // plf
+  const spans = posts.slice(1).map((p,i)=>p-posts[i]);
+  const beam = sizePorchBeam(Math.max(...spans), W_TL, W_LL);
+  const bd = BEAM_D[beam.size]*IN, bt=porchSeat(yB), bb=bt-bd;
+  for(let k=0;k<spans.length;k++){ const a=k===0?x0:posts[k], b=k===spans.length-1?x1:posts[k+1], len=b-a;
+    for(let i=0;i<beam.plies;i++) add({layer,lvl,cat:'Beam',sku:'SYP-'+beam.size,mode:'piece',len,label:`Porch beam · (${beam.plies}) ${beam.size} #2 SYP, spliced over posts`,color:COL.header,
+      g:{t:'box',c:[(a+b)/2,yB+(i-(beam.plies-1)/2)*1.5*IN,(bt+bb)/2],s:[len-0.01,1.5*IN,bd]}}); }
+  STATS.porchBeam={...beam, spans, trib, W_TL, W_LL, checks:spans.map(L=>beamCheck(beam.size,beam.plies,L,W_TL,W_LL))};
+  for(const X of posts) add({layer,lvl,cat:'Posts',sku:'PT-6x6',mode:'piece',len:bb,label:'Porch post 6x6 PT',color:COL.post,g:{t:'box',c:[X,yB,bb/2],s:[5.5*IN,5.5*IN,bb]}});
+  STATS.porchSpans = spans;
+  add({layer,lvl,cat:'Fascia',sku:'SYP-2x6',mode:'lf',len:x1-x0+1,label:'Sub-fascia (porch eave)',color:COL.rafter,g:{t:'box',c:[WD/2,yE,porchSeat(yE)+0.2],s:[x1-x0+1,1.5*IN,5.5*IN]}});
+  genEntryGable(layer,lvl,yE,posts);
+  STATS.porchArea = (x1-x0+1)*9*Math.hypot(1,SHED_P);
+  STATS.ledgerLF = (STATS.ledgerLF||0)+(x1-x0); STATS.posts=(STATS.posts||0)+posts.length;
+}
+
+// Entry gable over the steps (A-4 / A-9): 8/12 gable between the step posts, ridge level, stick framed
+// (California-style) on top of the 2/12 porch sheathing.
+function genEntryGable(layer,lvl,yE,posts){
+  const Xc=(posts[1]+posts[2])/2, HW=(posts[2]-posts[1])/2, GP=8/12;
+  const deck = Y => porchSeat(Y) + plumb(5.5/12,SHED_P) + 0.04;     // top of porch roof sheathing
+  const zE = deck(yE) + 1.5/12, zR = zE + HW*GP;                     // gable roof plane sits on the 1-1/2" flat bottom chords
+  const yEnd = yE + (zR-zE)/SHED_P;                                  // ridge meets the porch roof plane
+  const hw = Y => HW*(yEnd-Y)/(yEnd-yE);                             // valley half-width along the ridge
+  const yWall = -1.5*IN;                                             // face of the porch ledger on the house wall
+  const yStop = Math.min(yEnd, yWall);                               // a wide gable runs into the wall before the roofs meet
+  const atWall = yEnd > yWall;
+  const tag='Entry gable 8/12';
+  STATS.entry={Xc,HW,zE,zR,yEnd,yE,atWall,wallRise:atWall?(zR-(deck(yWall)+1.5/12)):0,wallHW:atWall?hw(yWall):0};
+  // Simple stick framing on top of the porch sheathing: 2x8 valley plates laid flat, level 2x6 ridge board,
+  // 2x6 rafters @ 16" from the ridge down to the valley plates, and a 2x6 rafter pair + studs at the front gable.
+  const R6=plumb(5.5/12,GP), plane = x => zR - x*GP - 0.04;          // underside of the gable sheathing at x from the ridge
+  const ridgeTop = plane(0.75*IN), ridgeLen = yStop-yE;
+  add({layer,lvl,cat:'Rafters',sku:'SYP-2x8',mode:'piece',len:ridgeLen,label:`${tag} · 2x8 ridge board (level${atWall?', hung at the house wall':''})`,color:COL.rafter,
+       g:{t:'box',c:[Xc,(yE+yStop)/2,ridgeTop-7.25/24],s:[1.5*IN,ridgeLen,7.25*IN]}});
+  // valley plates: outer edge on the valley line, flat on the porch sheathing
+  const vIn = 3.6*IN;
+  for(const sd of [-1,1]){ const A=[Xc+sd*(HW-vIn),yE,deck(yE)+0.75*IN], B=[Xc+sd*Math.max(0.05,hw(yStop)-vIn),yStop,deck(yStop)+0.75*IN];
+    add({layer,lvl,cat:'Rafters',sku:'SYP-2x8',mode:'piece',len:stickLen(A,B),label:`${tag} · 2x8 valley plate, flat on porch sheathing`,color:COL.short,g:{t:'stick',a:A,b:B,w:7.25*IN,d:1.5*IN}}); }
+  // rafters @ 16" o.c.: top edge on the 8/12 plane, seat cut onto the valley plate
+  let nR=0; const xSeat = h => h - (0.04 + R6)/GP;                   // where the rafter's bottom edge meets the plate top
+  for(let y=yE+16*IN; y<yStop-0.25; y+=16*IN){ const h=hw(y), xe=xSeat(h); if(xe<0.35) continue;
+    for(const sd of [-1,1]){ const A=[Xc+sd*0.0625,y,plane(0.0625)-R6/2], B=[Xc+sd*xe,y,plane(xe)-R6/2];
+      add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(A,B),label:`${tag} · 2x6 rafter @ 16" (ridge to valley plate)`,color:COL.rafter,g:{t:'stick',a:A,b:B,w:1.5*IN,d:5.5*IN}}); nR++; } }
+  // front gable: 2x6 rafter pair on a flat 2x6 plate at the porch edge, 2x4 studs @ 16" for the arched trim
+  const yF=yE+0.0625, pz=deck(yE)+0.75*IN;
+  add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'lf',len:2*HW,label:`${tag} · 2x6 gable plate, flat on porch sheathing`,color:COL.short,g:{t:'box',c:[Xc,yF+0.23,pz],s:[2*HW,5.5*IN,1.5*IN]}});
+  for(const sd of [-1,1]){ const A=[Xc+sd*(HW-0.05),yF,plane(HW-0.05)-R6/2], B=[Xc+sd*0.0625,yF,plane(0.0625)-R6/2];
+    add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(A,B),label:`${tag} · 2x6 front gable rafter`,color:COL.rafter,g:{t:'stick',a:A,b:B,w:1.5*IN,d:5.5*IN}}); nR++; }
+  for(let dx=-HW+16*IN; dx<HW-0.3; dx+=16*IN){ if(Math.abs(dx)<0.1) continue; const top=plane(Math.abs(dx))-R6, z0=pz+0.75*IN, len=top-z0; if(len<0.2) continue;
+    add({layer,lvl,cat:'Rafters',sku:'SYP-2x4',mode:'lf',len,label:`${tag} · 2x4 gable stud @ 16"`,color:COL.short,g:{t:'box',c:[Xc+dx,yF+0.15,z0+len/2],s:[1.5*IN,3.5*IN,len]}}); }
+  STATS.entryRafters=nR;
+  if(atWall){ // ridge and valleys die into the house wall: 2x6 nailers on the wall follow the gable profile
+    const hW=hw(yWall), zb=deck(yWall)+1.5*IN;
+    for(const sd of [-1,1]){ const A=[Xc+sd*(hW+0.05),yWall+0.07,zb+0.12], B=[Xc+sd*0.06,yWall+0.07,plane(0.06)-R6/2];
+      add({layer,lvl,cat:'Rafters',sku:'SYP-2x6',mode:'piece',len:stickLen(A,B),label:`${tag} · 2x6 wall nailer where the gable meets the house`,color:COL.rafter,g:{t:'stick',a:A,b:B,w:1.5*IN,d:5.5*IN}}); } }
+  // gable face sheathing (OSB) and roof deck (two triangles per side)
+  const fA=0.5*2*HW*(zR-zE);
+  add({layer:'rsheath',lvl:1.1,cat:'Roof deck',sku:'OSB-716',mode:'area',area:fA,label:`${tag} · gable face 7/16" OSB (${num(fA,1)} sf)`,color:COL.osb,
+       g:{t:'tri',pts:[[Xc-HW,yE-0.02,zE-0.35],[Xc+HW,yE-0.02,zE-0.35],[Xc,yE-0.02,zR-0.02]]}});
+  const triA=(A,B,C)=>{ const u=[B[0]-A[0],B[1]-A[1],B[2]-A[2]], v=[C[0]-A[0],C[1]-A[1],C[2]-A[2]]; return 0.5*Math.hypot(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]); };
+  for(const sd of [-1,1]){ const P1=[Xc,yE-0.12,zR+0.01], P2=[Xc+sd*(HW+0.17),yE-0.12,zE-0.17*GP+0.01];
+    const tris = atWall ? [[P1,P2,[Xc+sd*hw(yStop),yStop,deck(yStop)+1.5*IN+0.01]],[P1,[Xc+sd*hw(yStop),yStop,deck(yStop)+1.5*IN+0.01],[Xc,yStop,zR+0.01]]] : [[P1,P2,[Xc,yEnd,zR+0.01]]];
+    tris.forEach((t,k)=>{ const area=triA(...t); add({layer:'rsheath',lvl:1.1,cat:'Roof deck',sku:'RSH-716',mode:'area',area,label:`${tag} · roof deck ${sd<0?'left':'right'}${tris.length>1?' '+(k+1):''} (${num(area,1)} sf)`,color:COL.roof,g:{t:'tri',pts:t}}); }); }
+}
+function genRoofSheath(){
+  const R=(label,a,b,w,lvl)=>{ const len=stickLen(a,b); const area=len*w; add({layer:'rsheath',lvl,cat:'Roof deck',sku:'RSH-716',mode:'area',area,label:`${label} (${num(area)} sf)`,color:COL.roof,g:{t:'stick',a,b,w,d:0.04,op:0.85}}); return area; };
+  let a=0;
+  a+=R('Roof deck · main rear slope 4/12',[15,DP+1,tc(DP+1)+0.03],[15,YR,RTC+0.03],WD+2,3.1);
+  a+=R('Roof deck · main front slope 8/12',[15,-1,tc(-1)+0.03],[15,YR,RTC+0.03],WD+2,3.1);
+  a+=R('Roof deck · rear shed 3/12',[15,DP+0.05,shedSeat(DP)+5.5*IN+0.05],[15,BK+1,shedSeat(BK+1)+5.5*IN+0.05],WD+0.5,1.1);
+  a+=R('Roof deck · porch 2/12',[15,-0.05,porchSeat(0)+5.5*IN+0.05],[15,-9,porchSeat(-9)+5.5*IN+0.05],WD-2*(1+11/12)+1,1.1);
+  STATS.roofArea=a;
+}
+
+/* ---- drywall (1/2" gypsum) on every finished wall face + ceilings ---- */
+const DW = 0.5*IN, SHEATH_T = 0.4375*IN;
+function polyArea(pts){ let a=0; for(let i=0;i<pts.length;i++){ const [x1,y1]=pts[i],[x2,y2]=pts[(i+1)%pts.length]; a+=x1*y2-x2*y1; } return Math.abs(a)/2; }
+function genDrywall(){
+  const layer='drywall', col='#e8e5de';
+  const face=(w,coord,s0,s1,label)=>{ const rake=typeof w.top==='function'&&!w.dwTop, topAt=s=>w.dwTop??(rake?w.top(s):w.top), z0=w.base;
+    const xs=[s0,...(w.breaks||[]).filter(b=>b>s0&&b<s1),s1]; const pts=[[s0,z0],[s1,z0]]; for(let i=xs.length-1;i>=0;i--) pts.push([xs[i],topAt(xs[i])]);
+    let area=polyArea(pts); const holes=[];
+    for(const op of (w.openings||[])){ const b=op.w/2+op.c, a=op.pocket?b-op.doorW-1/12:op.c-op.w/2; if(op.c-op.w/2<s0||b>s1) continue; const lo=op.sill??z0+0.04; holes.push([[a,lo],[b,lo],[b,op.head],[a,op.head]]); area-=op.w*(op.head-lo); }
+    add({layer,lvl:w.lvl,cat:'Drywall',sku:'GWB-12',mode:'area',area,label:`1/2" drywall · ${label}`,color:col,g:{t:'shape',axis:w.axis,outer:coord,pts,holes,op:0.97}}); };
+  for(const w of WALLS){ const t=w.size==='2x6'?T6:T4, off=t/2+DW/2;
+    if(!w.ext){ face(w,w.at-off,w.from,w.to,`${w.name} (side A)`); face(w,w.at+off,w.from,w.to,`${w.name} (side B)`); continue; }
+    const inner = w.sheath ? -w.sheath.side : 1;
+    face(w,w.at+inner*off,w.from+(w.axis==='x'?T6:0),w.to-(w.axis==='x'?T6:0),`${w.name} (inside face)`);
+    if(w.id==='W3') face(w,w.at+off,14.5+T6,WD-T6,'Rear wall, bedroom side'); }
+  // ceilings: under the floor trusses (1st floor), under the scissor bottom chords (loft / open-to-above), under the shed rafters (bedroom)
+  const C=(label,a,b,wid,xc,lvl)=>{ const area=stickLen(a,b)*wid; add({layer,lvl,cat:'Drywall',sku:'GWB-12',mode:'area',area,label:`1/2" drywall ceiling · ${label}`,color:col,g:{t:'stick',a:[xc,a[1],a[2]],b:[xc,b[1],b[2]],w:wid,d:DW,op:0.45}}); };   // ceilings see-through so rooms stay readable
+  const fb=STATS.floorBot-DW/2;
+  C('1st floor, rear rooms',[0,12.0+0.22,fb],[0,DP-T6,fb],WD-2*T6,WD/2,1);
+  C('1st floor, dining',[0,T6,fb],[0,12.0-0.22,fb],9.208-T6,(T6+9.208)/2,1);
+  C('loft, front slope',[0,T6,bc(T6)-DW/2],[0,YR,bc(YR)-DW/2],WD-2*T6,WD/2,2);
+  C('loft, rear slope',[0,YR,bc(YR)-DW/2],[0,DP-T6,bc(DP-T6)-DW/2],WD-2*T6,WD/2,2);
+  C('bedroom, flat at 9\'-0"',[0,DP,PLATE1-DW/2],[0,BK-T6,PLATE1-DW/2],WD-14.5-2*T6,(14.5+WD)/2,1);
+}
+/* ---- fixtures, cabinets, appliances and a few furnishings (visual only, not priced) ---- */
+function genFurnish(){
+  const layer='furn', F=[]; STATS.furn=F;
+  const CAB='#d6d1c7', TOP='#41474e', SS='#aab3bc', WH='#f1f0ec', DARK='#22282e', WOOD='#8a6a4a', FAB='#6f7f8f', GL='#9fd3e6';
+  const it=(lvl,label,x0,x1,y0,y1,z0,h,color,plan=true,op=1)=>{ const zb=(lvl===2?SUB2:0)+z0;
+    add({layer,lvl:lvl===2?2:0,cat:'Furnishings',sku:null,mode:'none',label,color,g:{t:'box',c:[(x0+x1)/2,(y0+y1)/2,zb+h/2],s:[x1-x0,y1-y0,h],op}});
+    if(plan) F.push({lvl,label,x0,x1,y0,y1}); };
+  const L=0.5, Rr=DP-0.5, BR=34.5/12, CT=1.5/12;
+  // kitchen: L-shaped base run, farm sink under the 3026 window, range + hood on the left wall, 24" fridge
+  it(1,'Blind corner base BCB48R',L,4.5,Rr-2,Rr,0,BR,CAB); it(1,'Trash pull-out 15"',4.5,5.75,Rr-2,Rr,0,BR,CAB);
+  it(1,'Farm sink 24"',5.75,7.75,Rr-2.05,Rr,0.0,BR+CT,WH); it(1,'Sink bowl',5.95,7.55,Rr-1.8,Rr-0.25,BR-0.6,0.62,DARK,false);
+  it(1,'Dishwasher 18"',7.75,9.25,Rr-2,Rr,0,BR,SS);
+  it(1,'Countertop (rear run)',L,5.75,Rr-2.08,Rr,BR,CT,TOP,false); it(1,'Countertop (rear run)',7.75,9.25,Rr-2.08,Rr,BR,CT,TOP,false);
+  it(1,'Base cabinet B24R',L,L+2,19.0,21.0,0,BR,CAB); it(1,'Countertop (left run)',L,L+2.08,19.0,Rr-2,BR,CT,TOP,false);
+  it(1,'Range 30"',L,L+2.17,21.0,23.5,0,3.0,SS); it(1,'Cooktop',L+0.2,L+2.0,21.15,23.35,3.0,0.04,DARK,false);
+  it(1,'Hood 30"',L,L+1.6,21.0,23.5,5.4,0.75,SS,false); it(1,'Hood chimney',L,L+0.7,21.75,22.75,6.15,PLATE1-6.15-0.1,SS,false);
+  it(1,'Refrigerator 24"',L,L+2.3,16.9,18.9,0,6.0,SS);
+  it(1,'Upper cabinets (rear wall)',L,5.1,Rr-1,Rr,4.5,2.5,CAB,false); it(1,'Upper cabinets (left wall)',L,L+1,18.9,21.0,4.5,2.5,CAB,false);
+  it(1,'Upper cabinet over fridge',L,L+2,16.9,18.9,6.25,0.85,CAB,false);
+  // laundry / pantry / linen
+  const wdF=IX.I1+IH, Rf=RF();
+  it(1,'Stacked W/D 24"',wdF,wdF+2.0,Rf-2.15,Rf,0,6.6,WH);
+  const pBack=IX.I2-IH; for(const z of [1.5,3,4.5,6]) it(1,'Pantry shelf',pBack-1.33,pBack,IY.I7+IH,IY.I3-IH,z,0.06,WOOD,z===1.5);
+  for(const z of [1.5,3,4.5,6]) it(1,'Linen shelf',IX.I4+IH+0.05,IX.I9-IH-0.05,IY.I7+IH+0.05,IY.SH1-0.05,z,0.06,WOOD,z===1.5);
+  // bath: 54" vanity against the closet front wall, toilet in the 34" alcove facing the room, 60"×30" shower
+  const tF=IY.I6-IH, vx0=IX.I4+IH, vx1=vx0+4.5;
+  it(1,'Vanity 54"',vx0,vx1,tF-1.75,tF,0,BR,CAB); it(1,'Vanity top',vx0,vx1,tF-1.85,tF,BR,CT,'#e9e6df',false);
+  it(1,'Vanity sink',vx0+1.6,vx0+2.9,tF-1.5,tF-0.45,BR-0.3,0.42,DARK,false);
+  const shX0=IX.I9+IH, shY0=IY.I7+IH, shY1=IY.SH1;
+  it(1,'Shower 60"×30"',shX0,WD-T6-DW,shY0,shY1+0.02,0,0.33,WH); it(1,'Shower glass',shX0,WD-T6-DW,shY1-0.03,shY1+0.01,0.33,6.2,GL,false,0.35);
+  { const xc=(IX.I5+IH+WD-T6-DW)/2; it(1,'Toilet',xc-0.8,xc+0.8,Rf-0.62,Rf,1.25,1.3,WH); it(1,'Toilet bowl',xc-0.62,xc+0.62,Rf-1.95,Rf-0.62,0,1.3,WH,false); }
+  // dryer vent (owner: vent to the exterior patio wall): 4" rigid duct up the back of the stack, through the ceiling into the floor-truss bay, west past I1, out the rear wall above the covered patio
+  { const vx=wdF+0.3, vy=Rf-0.2, zt=PLATE1+0.7, xo=VENT_X(), MT='#9aa3ab';
+    it(1,'Dryer vent 4" rigid (riser)',vx-0.17,vx+0.17,vy-0.17,vy+0.17,4.6,zt-4.6+0.17,MT,false);
+    it(1,'Dryer vent 4" rigid (in truss bay)',xo-0.17,vx+0.17,vy-0.17,vy+0.17,zt-0.17,0.34,MT,false);
+    it(1,'Dryer vent 4" rigid (through rear wall)',xo-0.17,xo+0.17,vy-0.17,DP+0.05,zt-0.17,0.34,MT,false);
+    it(1,'Dryer vent hood w/ damper (patio wall)',xo-0.3,xo+0.3,DP+0.05,DP+0.3,zt-0.3,0.6,MT,false); }
+  // bedroom closet: rod + shelf
+  it(1,'Closet shelf & rod',IX.I4+IH,IX.I5-IH,Rf-1.0,Rf,5.6,0.06,WOOD,false);
+  // loft half bath
+  { const xl=T6+DW; it(2,'Toilet (loft)',xl,xl+0.62,22.8,24.4,1.25,1.3,WH); it(2,'Toilet (loft) bowl',xl+0.62,xl+1.95,23.0,24.2,0,1.3,WH,false);
+    it(2,'Wall-hung sink (loft)',xl,xl+1.5,20.4,21.9,2.55,0.45,WH); }
+  // furnishings for scale
+  { const xr=WD-T6-DW, yc=(DP+DW+BK-T6-DW)/2;               // queen bed, headboard on the bedroom's right wall
+    it(1,'Queen bed',xr-6.67,xr,yc-2.5,yc+2.5,0,2.0,FAB); it(1,'Headboard',xr-0.25,xr,yc-2.5,yc+2.5,2.0,1.6,WOOD,false);
+    it(1,'Nightstand',xr-1.4,xr,yc-4.0,yc-2.7,0,2.0,WOOD); it(1,'Nightstand',xr-1.4,xr,yc+2.7,yc+4.0,0,2.0,WOOD); }
+  it(1,'Dining table 36"×60"',3.3,6.3,3.5,8.5,2.33,0.12,WOOD); it(1,'Table base',4.4,5.2,5.4,6.6,0,2.33,WOOD,false);
+  it(1,'Sofa 84"',13.0,20.0,8.6,11.6,0,1.4,FAB); it(1,'Sofa back',13.0,20.0,10.9,11.6,1.4,1.3,FAB,false); it(1,'Coffee table',14.8,18.2,5.2,7.2,0,1.4,WOOD);
+  STATS.furnCount=F.length;
+}
+function genHardware(){
+  const layer='hardware', H=(sku,qty,label)=>{ if(qty>0) add({layer,lvl:0,cat:'Hardware',sku,mode:'ea',qty:Math.ceil(qty),label}); };
+  let ab=0, extLF=0, pins=0;
+  for(const w of WALLS){ if(!w.pt) continue; const L=w.to-w.from; if(w.ext){ ab+=Math.ceil(L/6)+1; extLF+=L; } else pins+=Math.ceil(L/2.5)+2; }
+  H('AB-12',ab,'Anchor bolts @ 6\' o.c., ≤12" from plate ends');
+  H('PIN',pins,'Interior plate pins');
+  H('SEAL',Math.ceil(extLF/50),'Sill sealer under exterior PT plates');
+  const ties = 2*(STATS.trusses+STATS.shedRafters+STATS.porchRafters);
+  H('H25A',ties,'Uplift tie at each truss/rafter bearing');
+  H('LUS26',STATS.shedRafters+STATS.porchRafters,'Rafter-to-ledger hangers');
+  H(STATS.floorTruss?'HGR-T':'HGR-J',STATS.joistHangers,STATS.floorTruss?'Floor trusses hung from flush beam B1':'Joists hung from flush beam B1');
+  H('HGR-2',STATS.trimmerHangers,'Double trimmer to beam');
+  H('LLOK',STATS.ledgerLF/1.33*2,'Ledger screws, 2 rows @ 16" staggered');
+  H('POCKET',WALLS.reduce((n,w)=>n+(w.openings||[]).filter(o=>o.pocket).length,0),'Pocket door frame kit (header track + split studs)');
+  H('ABU66',STATS.posts+(STATS.stairHole?2:1),STATS.stairHole?'Post bases (porch, patio, columns P1 + P2)':'Post bases (porch, patio, column P1)');
+  H('CAP6',STATS.posts,'Post caps');
+  H('STC',STATS.trussClips,'Partition-to-truss clips / nailer fasteners at loft walls');
+  H('MSTA36',(2*WD+2*DP)/4,'Floor-to-floor straps @ 48" (load path)');
+  H('HCLIP',(STATS.roofArea/32)*1.08*2,'H-clips between trusses');
+  H('ADH',(STATS.floorArea/32)*1.08/2,'Subfloor adhesive, 1 tube / 2 sheets');
+  const pcs = M.filter(m=>m.mode!=='none'&&m.mode!=='ea'&&m.mode!=='area').length;
+  H('N16',pcs/300,'Framing nails');
+  H('N8',((STATS.wallArea||0)+STATS.roofArea+STATS.floorArea)/32/22,'Sheathing nails (6"/6" high-wind schedule)');
+}
+
+function buildModel(){
+  applyGeometry(); WALLS=makeWalls();
+  M=[]; OPEN_REC=[]; STATS={};
+  const lf={};
+  for(const w of WALLS){ const L=genWall(w); lf[w.layer]=(lf[w.layer]||0)+L; }
+  STATS.wallLF=lf;
+  STATS.wallArea = M.filter(m=>m.layer==='wsheath').reduce((s,m)=>s+m.area,0);
+  genFloor(); genTrusses(); genShed(); genPorch(); genRoofSheath(); genDrywall(); genFurnish(); genHardware();
+}
+
+/* ---- rooms: bounds reference walls, so sizes follow the model ---- */
+const BEAM_FACE = () => 12.0 - 5.25*IN/2;
+// Stair per A-1/A-2: 3' flights, landing in the front-right corner at the 2524FX window. Upper flight runs toward the rear and lands at the beam B1 face; the lower flight enters the landing from the living room.
+function stairCode(S){   // nosing-line height, stringer underside, soffit over the bath, headroom to the roof
+  const zAt=y=>S.HL+(y-S.YL)/S.tU*S.rh, deep=11.25*IN/Math.cos(Math.atan(S.rh/S.tU))-0.3, yb=IY.I7+IH;
+  const zs=Math.floor((zAt(IY.I7+T4/2)-deep)*12)/12, over=Math.max(0,S.YT-yb);
+  let head=99; for(let y=S.YL; y<=S.YT; y+=0.25){ const roof=bc(Math.min(Math.max(y,T6),DP-T6))-DW; head=Math.min(head, roof-zAt(y)); }
+  return {zAt,deep,yb,zs,over,head}; }
+function stairGeom(){
+  const X1=WD-T6, X0=26.2, W=X1-X0, Y0=T6, YL=Y0+W, YT=BEAM_FACE();
+  const R=Math.ceil(SUB2*12/7.75-1e-6), rh=SUB2/R;
+  const T=10/12;
+  if(state.stair==='land1'||state.stair==='land2'){ const nL=state.stair==='land2'?2:1, nLT=nL-1, nU=R-nL, nUT=nU-1, tU=T, YT1=YL+nUT*tU;   // one full step (land2) then the corner landing as the next step, then one straight flight past the beam line into the loft
+    return {X0,X1,W,Y0,YL,YT:YT1,R,rh,nU,nUT,nL,nLT,T,tU,XS:X0-nLT*T,HL:nL*rh,ext:YT1>YT+0.01,YB:YT}; }
+  const nUT=Math.floor((YT-YL)*12/10+1e-6), nU=nUT+1, nL=R-nU, nLT=nL-1, tU=(YT-YL)/nUT;
+  return {X0,X1,W,Y0,YL,YT,R,rh,nU,nUT,nL,nLT,T,tU,XS:X0-nLT*T,HL:nL*rh,ext:false,YB:YT};
+}
+const ROOMS = [
+  {lvl:1,name:'KITCHEN',src:'sketch',label:"13'-11\" X 13'-1\"",x:['W2','I1'],y:['I10','W3']},
+  {lvl:1,name:'W/D',src:'sketch',label:"3'-4\" X 5'-2\"",x:['I1','I2'],y:['I3','W3']},
+  {lvl:1,name:'PANTRY',src:'sketch',label:"3'-4\" X 5'-0\"",x:['I1','I2'],y:['I7','I3']},
+  {lvl:1,name:'HALL',src:'sketch',label:"3'-4\" X 10'-10\"",x:['I2','I4'],y:[()=>IY.I7-IH,'W3']},
+  {lvl:1,name:'BATH',src:'sketch',label:null,x:['I4','W4'],y:['I12','I6']},
+  {lvl:1,name:'TOILET',src:'sketch',label:"2'-10\" X 2'-9\"",x:['I5','W4'],y:[()=>IY.I6-IH,'W3'],small:true},
+  {lvl:1,name:'BR CLOSET',src:'sketch',label:null,x:['I4','I5'],y:['I6','W3'],small:true},
+  {lvl:1,name:'SHOWER',src:'sketch',label:"5'-0\" X 2'-6\"",x:['I9','W4'],y:['I12',()=>IY.SH1]},
+  {lvl:1,name:'LINEN',src:'sketch',label:"2'-0\" X 2'-6\"",x:['I4','I9'],y:['I12',()=>IY.SH1],small:true},
+  {lvl:1,name:'DINING',label:"8'-6\" X 11'-6\"",x:['W2','I11'],y:['W1','I10']},
+  {lvl:1,name:'LIVING ROOM / OPEN ABOVE',label:"20'-1\" X 11'-9\"",x:['I11','W4'],y:['W1',BEAM_FACE]},
+  {lvl:1,name:'BEDROOM',src:'sketch',label:"14'-6\" X 11'-0\"",note:()=>state.bedClear?`set to ${ftin(state.bedClear)} clear`:null,x:['B1','B3'],y:[{w:'W3',fin:true},'B2']},
+  {lvl:1,name:'COVERED PATIO',label:"14'-6\" X 10'-2\"",raw:true,x:[()=>0,{w:'B1',out:true}],y:[{w:'W3',out:true},()=>BK]},
+  {lvl:1,name:'PORCH',label:"26'-2\" X 8'-0\"",raw:true,x:[()=>1+11/12,()=>WD-(1+11/12)],y:[()=>-8,{w:'W1',out:true}]},
+  {lvl:2,name:'LOFT',label:"28'-11\" X 13'-9\"",x:['U3','U4'],y:[()=>12.0+5.25*IN/2,'U1']},
+  {lvl:2,name:'ATTIC STORAGE',label:"8'-6\" X 5'-11\"",x:['U3','U6'],y:['U2','U5']},
+  {lvl:2,name:'OPEN BELOW',label:"20'-1\" X 11'-3\"",open:true,x:['U6','U4'],y:['U2',BEAM_FACE]},
+  {lvl:2,name:'LOFT BATH',label:null,x:['U3','U8'],y:['U7','U1'],small:true},
+];
+const wallById = id => WALLS.find(w=>w.id===id);
+function faceAt(b, side, mode){
+  if(typeof b==='function') return b();
+  const ref = typeof b==='string' ? {w:b} : b, w=wallById(ref.w), half=(w.size==='2x6'?T6:T4)/2;
+  if(mode==='frame') return w.at + side*half;
+  if(ref.out) return w.at + side*(half+SHEATH_T);
+  return w.at + side*(half+DW);
+}
+function roomBox(r, mode){ const x0=faceAt(r.x[0],1,mode), x1=faceAt(r.x[1],-1,mode), y0=faceAt(r.y[0],1,mode), y1=faceAt(r.y[1],-1,mode); return {x0,x1,y0,y1,w:x1-x0,d:y1-y0}; }
+function parseLabel(l){ const m=l.split(' X '); return [parseFtIn(m[0]),parseFtIn(m[1])]; }
+
+/* =====================================================================
+   6. COSTING
+   ===================================================================== */
+const STD_LEN=[8,10,12,14,16,18,20,22,24];
+function stockLen(len){ for(const s of STD_LEN) if(s >= len-0.02) return s; return null; }
+const wasteF = sku => 1 + (state.waste[PB[sku].w]||0)/100;
+const KERF = 0.125*IN;
+let OPT = {used:0,bought:0};
+// Best-fit-decreasing cutting: splits > 20' into 16' runs (staggered splices), opens 16' stock (or longer for long pieces), then shrinks each stick to the shortest standard length that holds its cuts.
+function optimizeCuts(lengths){
+  const items=[]; for(let L of lengths){ while(L>20.01){ items.push(16); L-=16; } if(L>0.02) items.push(L); }
+  items.sort((a,b)=>b-a); const bins=[];
+  for(const it of items){ let bin=null, best=Infinity;
+    for(const b of bins){ const r=b.rem-it-KERF; if(r>=-1e-6 && r<best){ best=r; bin=b; } }
+    if(!bin){ const st = it>16-KERF ? stockLen(it) : 16; bin={stock:st,rem:st,used:0,n:0}; bins.push(bin); }
+    bin.rem-=it+KERF; bin.used+=it; bin.n++; }
+  const counts=new Map(); let used=0, bought=0;
+  for(const b of bins){ const need=b.stock-b.rem-KERF; const st=stockLen(need)||b.stock; counts.set(st,(counts.get(st)||0)+1); used+=b.used; bought+=st; }
+  return {counts,used,bought}; }
+const isDim = sku => sku && (sku.startsWith('SYP-')||sku.startsWith('PT-'));
+const price = sku => state.prices[sku]*state.market;
+
+function linesFor(layerId){
+  const map=new Map(); const opt=new Map();
+  for(const m of M){ if(m.layer!==layerId||m.mode==='none'||!m.sku) continue;
+    if(state.cutopt && isDim(m.sku) && (m.mode==='piece'||m.mode==='lf')){ const e=opt.get(m.sku)||{lens:[],uses:new Set()}; e.lens.push(m.len); e.uses.add(m.cat); opt.set(m.sku,e); continue; }
+    let key, stock=null;
+    if(m.mode==='piece'){ stock=stockLen(m.len); if(stock===null){ const n=Math.ceil(m.len/16); key=m.sku+'|16'; const e=map.get(key)||{sku:m.sku,mode:'piece',stock:16,n:0,uses:new Set()}; e.n+=n; e.uses.add(m.cat); map.set(key,e); continue; } key=m.sku+'|'+stock; }
+    else key=m.sku+'|'+m.mode;
+    const e=map.get(key)||{sku:m.sku,mode:m.mode,stock,n:0,lf:0,area:0,uses:new Set()};
+    e.n+= m.mode==='ea'?m.qty:1; e.lf+=m.len||0; e.area+=m.area||0; e.uses.add(m.cat); map.set(key,e);
+  }
+  for(const [sku,e] of opt){ const r=optimizeCuts(e.lens); OPT.used+=r.used; OPT.bought+=r.bought; const yld=r.used/r.bought*100;
+    for(const [st,n] of r.counts) map.set(sku+'|opt|'+st,{sku,mode:'opt',stock:st,n,uses:new Set([...e.uses,`cut-optimized ${num(yld)}% yield`])}); }
+  const out=[];
+  for(const e of map.values()){ const pb=PB[e.sku], wf=wasteF(e.sku); let qty,unit,uc,desc=pb.name,lf=0;
+    if(e.mode==='opt'){ qty=Math.ceil(e.n*wf); unit='pcs'; uc=price(e.sku)*e.stock; desc+=` × ${e.stock}'`; lf=qty*e.stock; }
+    else if(e.mode==='piece'){ qty=Math.ceil(e.n*wf); unit='pcs'; uc=price(e.sku)*e.stock; desc+=` × ${e.stock}'`; lf=qty*e.stock; }
+    else if(e.mode==='count'){ qty=Math.ceil(e.n*wf); unit='pcs'; uc=price(e.sku); }
+    else if(e.mode==='lf'){ qty=Math.ceil(e.lf*wf/16); unit='pcs'; uc=price(e.sku)*16; desc+=` × 16' (cut list ${num(e.lf)} LF)`; lf=qty*16; }
+    else if(e.mode==='lfx'){ qty=Math.ceil(e.lf*wf); unit='LF'; uc=price(e.sku); lf=qty; }
+    else if(e.mode==='area'){ qty=Math.ceil(e.area*wf/(pb.sf||32)); unit='sheets'; uc=price(e.sku); desc+=` (${num(e.area)} sf)`; }
+    else { qty=Math.ceil(e.n*wf); unit=pb.unit==='ea'?'ea':pb.unit; uc=price(e.sku); }
+    const bf = pb.bfEa ? qty*pb.bfEa : (pb.bf ? lf*pb.bf : 0);
+    out.push({sku:e.sku,cat:pb.cat,desc,qty,unit,uc,cost:qty*uc,uses:[...e.uses].join(', '),bf,stock:e.stock});
+  }
+  out.sort((a,b)=>CAT_ORDER.indexOf(a.cat)-CAT_ORDER.indexOf(b.cat)||b.cost-a.cost);
+  return out;
+}
+function layerMeasure(id, lines){
+  switch(id){
+    case 'l1ext': case 'l1int': case 'l2walls': return STATS.wallLF[id]||0;
+    case 'floor': return STATS.floorArea;
+    case 'trusses': return STATS.trusses;
+    case 'shed': return STATS.shedArea;
+    case 'porch': return STATS.porchArea;
+    case 'furn': return STATS.furnCount||0;
+    case 'wsheath': case 'rsheath': case 'drywall': return lines.reduce((s,l)=>s+(l.unit==='sheets'?l.qty:0),0);
+    case 'hardware': return lines.reduce((s,l)=>s+(l.unit==='ea'?l.qty:0),0);
+  } return 0;
+}
+let COST;
+function recalc(){
+  const layers={}; let mat=0, lab=0; OPT={used:0,bought:0};
+  for(const L of LAYERS){ const lines=linesFor(L.id); const m=lines.reduce((s,l)=>s+l.cost,0); const meas=layerMeasure(L.id,lines);
+    const st=state.layers[L.id];
+    layers[L.id]={lines,mat:m,lab:0,meas,total:m};
+    if(st.inc){ mat+=m; } }
+  const tax=mat*state.tax/100, total=mat+lab+tax+(mat>0?state.delivery:0);
+  let pcs=0, bf=0; for(const L of LAYERS){ if(!state.layers[L.id].inc) continue; for(const l of layers[L.id].lines){ if(l.unit==='pcs') pcs+=l.qty; bf+=l.bf; } }
+  COST={layers,mat,lab,tax,total,area:AREA_L1+STATS.floorArea,pcs,bf,yield:OPT.bought?OPT.used/OPT.bought:null};
+  return COST;
+}
+
+/* =====================================================================
+   7. CHECKS
+   ===================================================================== */
+const DIMS = [
+  ['A-1','Front wall opening centerlines',["4'-9\"","7'-2\"","7'-1\"","4'-6\"","6'-6\""],"30'-0\"",null],
+  ['A-1','Rear: covered patio + bedroom',["14'-6\"","15'-7\""],"30'-0\"","Bedroom 15'-6\", patio 14'-6\". Agrees with the 3'-8\" + 11'-10\" window string."],
+  ['A-1','Bedroom rear window location',["3'-8\"","11'-10\""],"15'-7\"","Bedroom width 15'-6\"; plates cut from one 16' stick."],
+  ['A-1','Left side: patio + main body',["10'-0\"","26'-0\""],"36'-1\"","Overall depth 36'-0\", bedroom bump 10'-0\". Same answer as the right-side string; bump plates come out of 10' stock and shed rafters out of 12'."],
+  ['A-1','Left wall window centerlines',["11'-7\"","8'-1\"","6'-3\""],"26'-0\"","Last segment 6'-4\" to the front corner."],
+  ['A-1','Right wall window centerlines',["16'-1\"","17'-9\"","2'-2\""],"36'-1\"","Closes at 36'-0\" overall (see left side)."],
+  ['A-1','Porch with side returns',["1'-11\"","26'-1\"","1'-11\""],"30'-0\"","Porch 26'-2\" per the room label: 1'-11\" + 26'-2\" + 1'-11\" = 30'-0\"."],
+  ['A-1','Porch room label vs. dimension string',["26'-2\""],"26'-1\"","Use 26'-2\"."],
+  ['A-1','Foundation width',["2'-0\"","26'-0\"","2'-0\""],"30'-0\"",null],
+  ['A-2','Loft rear window centerlines',["6'-8\"","8'-2\"","8'-4\"","6'-8\""],"30'-0\"","Center window on the 15'-0\" centerline: 6'-8\" + 8'-4\" + 8'-4\" + 6'-8\", symmetric with the gable."],
+  ['A-2','Loft side: ridge CL split',["11'-4\"","14'-7\""],"26'-0\"","Front segment 14'-8\"; ridge stays 11'-4\" from the rear wall."],
+  ['A-2','Loft inside width vs. 30\' − 2 × 5-1/2" studs',["29'-0\""],"29'-1\"","Label should read 29'-1\"."],
+];
+function buildChecks(){
+  const C=[]; const RES = state.geo==='resolved';
+  const push=(sec,st,title,detail)=>C.push({sec,st,title,detail});
+  for(const [sh,what,parts,total,fix0] of DIMS){ const fix = state.bedClear && /Left side|Right wall window/.test(what) ? `Overall depth ${ftin(BK)}: bedroom deepened to ${ftin(state.bedClear)} clear, so the bump is ${ftin(BK-DP)} and the covered patio deepens with it.` : fix0; const sum=parts.reduce((s,p)=>s+parseFtIn(p),0), tot=parseFtIn(total), d=(sum-tot)*12;
+    const closes=Math.abs(d)<=0.5; const st = closes?'ok':(RES&&fix?'fix':'warn');
+    const off = closes?' — closes':` — off by ${ftin(Math.abs(d)/12).replace("0'-","")}`;
+    push('Plan dimension strings',st,`${what} <span class="note">(${sh})</span>`,`Drawn: <code>${parts.join(' + ')}</code> = <code>${ftin(sum)}</code> vs <code>${total}</code>${off}.${!closes&&fix?`<br>${RES?'Resolved':'Proposed fix'}: ${fix}`:''}`);
+  }
+  const fa=STATS.floorArea, dA=(fa-AREA_L2_DWG)/AREA_L2_DWG*100;
+  push('Areas',Math.abs(dA)<=2?'ok':'warn','2nd floor framed area vs. "Living area 534 sq ft" (A-2)',`Framed deck ${num(fa)} sf (rear bay 30' × 14' + loft/storage bay 9' × 12'), ${dA>0?'+':''}${num(dA,1)}% from label.`);
+  push('Areas','info','1st floor footprint',`Main 30' × 26' + bedroom 15'-6" × ${ftin(BK-DP)} = <code>${num(AREA_L1)} sf</code> conditioned; porch ${num(26.17*8)} sf and patio ${num(14.5*(BK-DP))} sf under roof.`);
+  const jd=STATS.joistDepth+0.719;
+  if(RES){
+    push('Heights & roof geometry','ok','1st floor plate 9\'-0"',`As drawn. 103-1/2" studs come out of 10' stock; the cut-list optimizer nests the offcuts into cripples and blocking.`);
+    { const da=(SUB2-(10+1.75/12))*12; push('Heights & roof geometry',Math.abs(da)<=0.25?'fix':'info',`2nd floor subfloor ${ftin(SUB2)}`,`Plate + ${STATS.joistName} + 23/32" deck (${num(jd,2)}"). A-4 shows 10'-1 3/4"${Math.abs(da)<=0.25?' — matches.':` — ${num(Math.abs(da),1)}" ${da>0?'higher; all heights above shift up with it (stair gains a riser check).':'lower.'}`}`); }
+    push('Heights & roof geometry','ok',`Loft rear plate ${ftin(PLATE2B)}`,`As drawn; ${num((PLATE2B-SUB2)*12-4.5,1)}" studs cut from 8' stock.`);
+    push('Heights & roof geometry','ok',`Bedroom ceiling ${ftin(BUMP_PLATE)} (flat)`,`Bedroom walls on a ${ftin(BUMP_PLATE)} plate with 2x6 ceiling joists @ 16", matching the rest of the 1st floor. The rear shed rises 3/12 from that plate to a ledger seat at ${ftin(SHED_SEAT)} on the main rear wall; A-4 showed the bedroom plate at 8'-1 1/4".`);
+  } else {
+    const drawn=(SUB2-PLATE1)*12, dd=jd-drawn;
+    push('Heights & roof geometry',Math.abs(dd)<=0.75?'ok':'warn','Floor system depth fits 9\'-0" plate → 10.1\' subfloor',`Drawn <code>${num(drawn,1)}"</code>; ${STATS.joistName} + 23/32" deck = <code>${num(jd,1)}"</code> (${dd>0?'+':''}${num(dd,1)}").`);
+
+  }
+  const fh = OPEN_REC.filter(o=>o.id==='W1');
+  push('Heights & roof geometry', fh.every(o=>o.hdr.ok)?'ok':'warn','Front openings: 8\'-1 1/4" heads',`<code>${num(fh[0].avail,2)}"</code> below the double top plate, so headers max out at 2x8. Largest RO ${ftin(Math.max(...fh.map(o=>o.ro)))} vs (2) 2x8 allowable ${ftin(HDR_SPAN['roof+floor']['2x8'])}.`);
+  const dr=(RTC+0.04-RIDGE_DWG)*12;
+  push('Heights & roof geometry','warn','Ridge label doesn\'t match pitch + plate',`Rear plate ${num(PLATE2B,2)}' + ${num(HEEL_R*12,2)}" standard heel + 4/12 over 11'-4" puts the ridge at <code>${ftin(RTC+0.04)}</code>; A-3–A-6 call <code>21.8'</code> (${num(dr,1)}" lower). No positive heel reaches 21.8', so the label is the likely error. Truss designer to confirm before ordering.`);
+  push('Heights & roof geometry','info','Front loft knee wall',`8/12 from the ridge line gives a <code>${ftin(PLATE2F-SUB2)}</code> knee wall (plate at ${ftin(PLATE2F)}).`);
+  const risers=Math.ceil(SUB2*12/7.75), rh=SUB2*12/risers;
+  { const S=STATS.stair;
+    if(S.nL<=2){ push('Heights & roof geometry','info',S.nL===2?'Stair: 1 step + landing step':'Stair: landing as the only step',`${ftin(SUB2)} rise → <code>${risers} risers @ ${num(rh,2)}"</code>. ${S.nL===2?`One full step (10" tread at ${num(rh,2)}") from the living room, then the ${ftin(S.W)} square corner landing as the second step (${num(S.HL*12,1)}" up)`:`One step (${num(rh,2)}") from the living room onto a ${ftin(S.W)} square corner landing`}, then a straight <code>${S.nU}R / ${S.nUT} × 10"</code> flight toward the rear. That flight needs ${ftin(S.nUT*S.tU)} of run, so it ends ${ftin(S.YT-BEAM_FACE())} past the beam B1 line, inside the loft floor. Framed with: B1 stopped at a new PSL column P2 beside the stair, a double trimmer truss along the stair's inner edge, and a (2) LVL header at the top riser carrying the shortened floor trusses.`);
+      const K=stairCode(S), nos=S.tU*12<11;
+      const rows=[[S.rh*12<=7.75,`Risers ${num(S.rh*12,2)}" ≤ 7-3/4" (R311.7.5.1), all ${S.R} equal including the ${S.nL===2?'step and the landing':'step onto the landing'}`],
+        [S.tU*12>=10,`Treads ${num(S.tU*12,1)}" ≥ 10"${nos?' with a 3/4"–1-1/4" nosing (required under 11")':''} (R311.7.5.2)`],
+        [S.W*12-1>=36,`Width ${num(S.W*12-1,1)}" clear between finished walls ≥ 36" (R311.7.1)`],
+        [S.W>=3,`Corner landing ${ftin(S.W)} × ${ftin(S.W)}: at least the stair width and 36" in the direction of travel (R311.7.6)`],
+        [K.head>=6+8/12,`Headroom ≥ ${ftin(K.head)} along the whole flight (6'-8" min, R311.7.2). B1 stops at column P2 so nothing crosses over the stair`],
+        [true,`Top landing: open loft floor beyond the top riser, ≥ 36" deep`],
+        [true,`Handrail 34"–38" above the nosings on the right wall (4+ risers, R311.7.8); 2x6 blocking is in the takeoff`],
+        [true,`Guards 36" on the open side of the flight once it is more than 30" up, and around the loft stair opening (R312.1)`]];
+      if(K.over>0) rows.push([K.zs>=6+8/12,`Bath soffit: the top ${num(K.over*12,0)}" of the flight passes over the front of the shower, so it gets a framed soffit at ${ftin(K.zs)} (shower minimum 6'-8", R305.1). 1/2" drywall on it also gives the under-stair protection (R302.7)`]);
+      { const fw=wallById('W1'), near=(fw.openings||[]).filter(o=>o.type==='win' && (o.sill??9)<3).map(o=>({o,d:S.XS-(o.c+o.w/2)})).filter(x=>x.d<5);
+        rows.push([true, near.length?`Tempered glass at the bottom of the stair (R308.4.7): ${near.map(x=>`${x.o.label} at ${ftin(x.o.c)} (${num(x.d*12,0)}" from the bottom nosing, sill ${ftin(x.o.sill)})`).join(', ')}; within 60" of the bottom tread with sills under 36", so tag them tempered on the window order`:'No windows within 60" of the bottom tread']); }
+      const ok=rows.every(r=>r[0]);
+      push('Heights & roof geometry',ok?'ok':'warn','Stair code check',rows.map(r=>`${r[0]?'✓':'✗'} ${r[1]}`).join('<br>'));
+    } else push('Heights & roof geometry','info','Stair',`${ftin(SUB2)} rise → <code>${risers} risers @ ${num(rh,2)}"</code> (≤ 7-3/4"). A straight run would need ${ftin((risers-1)*10/12)}, so it's framed as on A-1: <code>${S.nL}R</code> lower flight from the living room (${S.nLT} × 10" treads) to a ${ftin(S.W)} square landing at ${ftin(S.HL)}, then <code>${S.nU}R</code> upper flight toward the rear (${S.nUT} × ${num(S.tU*12,1)}" treads) landing at beam B1. The lower flight runs across the 3068 front window at X 23.5', so that unit needs tempered glass (IRC R308.4.6).`); }
+  // room sizes at finished faces
+  push('Room sizes (finished)','warn','Interior walls are drawn 4" thick',`A-1 notes 4" interior walls, but 2x4 studs (3-1/2") + 1/2" drywall each side finish at <code>4-1/2"</code>. Every room bounded by interior walls loses about 1/4" per side against its label; the model keeps the designer's wall centerlines.`);
+  push('Room sizes (finished)','ok','Exterior walls 6-1/2" checks out',`1/2" drywall + 2x6 (5-1/2") + 7/16" sheathing = <code>6-7/16"</code>, matching the 6-1/2" note. The model takes the 30'-0" and 26'-0" overall dimensions to the face of stud, so rooms against exterior walls come out about 1/2" larger than drawn; if the overalls are meant to the face of sheathing, those rooms shrink by 7/16".`);
+  for(const r of ROOMS){ if(!r.label) continue; const b=roomBox(r,r.raw?'raw':'fin'), [lw,ld]=parseLabel(r.label), dw=(b.w-lw)*12, dd=(b.d-ld)*12, bad=Math.abs(dw)>0.51||Math.abs(dd)>0.51;
+    const sg=v=>{ const a=Math.abs(v); if(a<1/16) return '0"'; const f=ftin(a/12).replace(/^0'-/,'').replace(/^0 /,''); return `${v>0?'+':'−'}${f}`; };
+    push('Room sizes (finished)',bad?'warn':'ok',`${r.name} <span class="note">(${r.src||'A-'+r.lvl})</span>`,`Built ${r.raw?'(to framing/sheathing)':'(finished faces)'}: <code>${ftin(b.w)} × ${ftin(b.d)}</code> · ${r.src==='sketch'?'Sketch':'Drawn'}: <code>${r.label.replace(' X ',' × ')}</code>${bad?` · off by ${sg(dw)} × ${sg(dd)}`:' · within 1/2"'}`); }
+  push('Room sizes (finished)','warn','Living room vs. loft "open below" disagree',`The same opening edge is dimensioned 11'-9" deep on A-1 (living room) and 11'-3" on A-2 (open below), a 6" conflict. The model puts the edge at the face of the flush beam, ${ftin(BEAM_FACE()-T6-DW)} clear of the finished front wall, which matches A-2.`);
+  { const xo=VENT_X(), dl=(PLATE1+0.4-4.6)+(IX.I1+IH+0.3-xo)+(DP-RF()+0.2); push('Room sizes (finished)','info','Dryer vent to the patio wall',`The W/D closet backs onto the bedroom, not the patio (the patio side of the rear wall ends ${num((IX.I1+IH-14.5)*12,1)}" left of the closet). So the 4" rigid duct rises behind the stacked unit into the 12" floor-truss bay, jogs ${num((IX.I1+IH+0.3-xo)*12,0)}" west through the truss webs and exits the rear wall rim at about ${ftin(PLATE1+0.7)} under the patio roof (${ftin(SHED_SEAT)} at the wall). About ${ftin(dl)} of pipe + 3 elbows ≈ ${Math.round(dl+15)}' equivalent length vs. the 35' limit (M1502.4.5). Hood ${num(Math.hypot(xo-(IX.I1-IH-(22+18)/12+1.6),PLATE1+0.7-H1),1)}' from the kitchen patio door head (3' min).`); }
+  // framing conflicts
+  let conflicts=0, teeN=0;
+  for(const o of OPEN_REC){ teeN+=o.tees.length; const hit=o.tees.filter(t=>t.s+t.half>o.zone[0]+0.03&&t.s-t.half<o.zone[1]-0.03);
+    if(hit.length){ conflicts++; push('Framing conflicts','warn',`${esc(o.label)} collides with ${esc(hit[0].name)}`,`Opening framing spans ${ftin(o.zone[0])}–${ftin(o.zone[1])} along ${esc(o.wall)}; intersecting wall at ${ftin(hit[0].s)}.`); } }
+  push('Framing conflicts',conflicts?'warn':'ok','Openings vs. T-intersections',`${OPEN_REC.length} openings checked against ${teeN} wall intersections${conflicts?'':' — no king, jack or header lands on an intersecting wall'}.`);
+  push('Framing conflicts','fix','Gable fire blocking',`Fire blocking in the raked loft walls only runs where studs exceed 10' and sits 9'-6" above the plate, under the raked top plate.`);
+  // optimization summary (filled by rebuild)
+  if(SCEN){ const cur=COST;
+    const sv=(a,b)=>{ const f=(v,u,fmt)=> v>=0?`${fmt(v)} ${u}`:`${fmt(-v)} ${u} more`; return `${f(a.mat-b.mat,'',money).trim()} · ${f(a.pcs-b.pcs,'pcs',num)} · ${f(a.bf-b.bf,'BF',num)}`; };
+    push('Lumber optimization','info','Baseline: as drawn, simple 16\' nesting',`Material ${money(SCEN.base.mat)} · ${num(SCEN.base.pcs)} pieces · ${num(SCEN.base.bf)} BF.`);
+    push('Lumber optimization',SCEN.base.mat>=cur.mat?'ok':'warn','Current settings',`Material ${money(cur.mat)} · ${num(cur.pcs)} pieces · ${num(cur.bf)} BF. Saves ${sv(SCEN.base,cur)} vs baseline.`);
+    if(state.cutopt) push('Lumber optimization','ok',`Cut-list optimizer: ${num((cur.yield||0)*100,1)}% yield`,`Best-fit cutting from 8'–20' stock. Without it: ${money(SCEN.noOpt.mat)} (${sv(SCEN.noOpt,cur)} more).`);
+    if(state.geo==='resolved') push('Lumber optimization','ok','Resolved dimensions',`vs. drawn dimensions with the same options: saves ${sv(SCEN.drawn,cur)}.`);
+    const moved=OPEN_REC.filter(o=>o.shift);
+    if(state.snap) push('Lumber optimization','ok',`Openings aligned to stud layout (${moved.length} moved ≤ 4")`,moved.length?moved.map(o=>`${esc(o.label)} ${o.shift>0?'+':''}${o.shift}" (${esc(o.wall)})`).join(' · ')+`. Saves ${sv(SCEN.noSnap,cur)}.`:'All openings already on layout.');
+  }
+  // headers
+  for(const o of OPEN_REC){ const h=o.hdr; const st=h.ok?(h.type==='lvl'?'info':'ok'):'warn';
+    push('Headers',st,`${esc(o.label)} <span class="note">· ${esc(o.wall)}</span>`,`RO <code>${ftin(o.ro)}</code> · ${h.label}${h.allow?` (allow ${ftin(h.allow)}, ${o.bearing})`:''}${h.type==='lvl'?' · LVL: verify with manufacturer':''}${!h.ok?' · exceeds table — upsize or engineer':''}`); }
+  // spans
+  { const inl = state.extOC===24;
+    push('Truss bearing','ok','Full bearing on the double top plate',`Each truss has a level bottom-chord seat across the full 5-1/2" of the 2x6 plate at the rear wall (plate ${ftin(PLATE2B)}) and the front knee wall (plate ${ftin(PLATE2F)}); the scissor slope starts at the inside face of the wall.`);
+    push('Truss bearing','ok','Standard heels match the roof planes',`Top-chord bottom edge meets the plate at the outside face: heel ${num(HEEL_R*12,2)}" at the rear (4/12) and ${num(HEEL_F*12,2)}" at the front (8/12) for 2x4 chords. Ridge, knee-wall height and rake-wall plates are all derived from these.`);
+    push('Truss bearing','ok','Uplift: H2.5A at every bearing',`${STATS.trusses*2} ties, one per truss end, on the inside face of the plate (shown in steel grey). Vented 2x4 blocking sits on the inside edge of the plate between trusses, below the sheathing.`);
+    push('Truss bearing',inl?'ok':'info',inl?'In-line framing':'Trusses vs. stud layout',inl?'Exterior studs at 24" o.c. land directly under every truss.':`Trusses are at 24" o.c. and studs at 16", so only every other truss lands over a stud. A double top plate covers this (IRC R602.3.2); switch to 24" studs for in-line framing.`);
+    push('Truss bearing','ok','Dropped gable with ladder overhang',`Gable rake walls sit one lookout depth (${num(plumb(3.5,PF_),2)}" front, ${num(plumb(3.5,PB_),2)}" rear, plumb) below the roof plane. 2x4 lookouts @ 24" bear on the rake plate and run back into the first truss, 2' in.`);
+    push('Truss bearing','ok','Loft partitions tied to trusses',`Walls crossing the trusses get STC clips (slotted, so the truss can deflect); walls running between trusses get flat 2x4 nailers @ 24". Wall tops follow the bottom-chord slope.`);
+    push('Truss bearing','info','Truss design by manufacturer',`Bearing widths, heel heights and uplift values above should match the sealed truss drawings; the uplift tie may change if the design reactions exceed H2.5A capacity.`); }
+  const allowJ={syp:17.0, ij:19.0, ft:20.0, ft16:24.0}[state.joist];
+  if(STATS.floorTruss) push('Spans', state.joist==='ft16'?'ok':'info', 'HVAC through the floor trusses', state.joist==='ft16'
+    ? `16" trusses with an open chase panel at mid-span of each bay (shown in the model) leave room for a rectangular supply trunk; branch runs pass through the webs. Confirm chase size and location with the truss designer and HVAC sub before the layout is sealed.`
+    : `12" trusses pass small round branch ducts through the webs and a modest chase panel at mid-span (shown in the model). A full rectangular trunk usually needs 14"–16" trusses: try the 16" option, which raises the loft ${num(4,0)}" in resolved mode. Confirm duct sizes with the HVAC sub.`);
+  push('Spans',STATS.joistSpan<=allowJ?'ok':'warn',`2nd floor ${STATS.joistName} @ ${STATS.joistOC}" o.c.`,`Clear span <code>${ftin(STATS.joistSpan)}</code> vs approx. allowable <code>${ftin(allowJ)}</code> (40 psf live / 10 dead, L/360).`);
+  push('Spans','warn','Flush beam B1 · (3) 1-3/4×11-7/8 LVL',`Two spans ≈ <code>${ftin(14.67-0.23)}</code> / <code>${ftin((STATS.stairHole?STATS.b1End-0.22:WD)-14.67-0.23)}</code> on column P1${STATS.stairHole?' and column P2 at the stair (the beam stops there so the stair can pass under the loft edge)':''}, carrying ~${ftin(6.9)} of floor plus loft walls. Run through LVL sizing software or an engineer.`);
+  { const pb=STATS.patioBeam, c=pb.check, one=state.patioPosts!==2;
+    push('Spans',pb.ok?'ok':'warn',`Patio beam · (2) ${pb.size} #2 SYP`,`${ftin(pb.trib)} of 3/12 shed roof on it (${num(pb.W_TL)} plf). Span${pb.spans.length>1?'s':''} ${pb.spans.map(ftin).join(' · ')}: bending ${num(c.fb)} of ${num(c.Fb)} psi, shear ${num(c.fv)} of ${num(c.Fv)} psi, deflection L/${num(Math.min(c.rLL,9999))} live, L/${num(Math.min(c.rTL,9999))} total.${pb.ok?'':` No double-ply 2x member works on this span: use (3) ${pb.alt3.size} or add a mid post, which allows (2) ${pb.altPost.size}.`}`); }
+  { const pbm=STATS.porchBeam, worst=pbm.checks.reduce((a,c)=>c.Lft>a.Lft?c:a);
+    push('Spans',pbm.ok?'ok':'warn',`Porch beam · (${pbm.plies}) ${pbm.size} #2 SYP`,`Sized for the longest bay with ${ftin(pbm.trib)} of roof on it (${PORCH_DL} psf dead + ${PORCH_LL} psf roof live = ${num(pbm.W_TL)} plf). Bays ${pbm.spans.map(ftin).join(' · ')}. Worst bay ${ftin(worst.Lft)}: bending ${num(worst.fb)} of ${num(worst.Fb)} psi, shear ${num(worst.fv)} of ${num(worst.Fv)} psi, deflection L/${num(Math.min(worst.rLL,9999))} live, L/${num(Math.min(worst.rTL,9999))} total.`);
+    const four = state.porchPosts!==5; const alt = sizePorchBeam(four?Math.max(...pbm.spans.filter(x=>x!==Math.max(...pbm.spans)), Math.max(...pbm.spans)/2):0, pbm.W_TL, pbm.W_LL);
+    if(four) push('Spans','info','Smaller porch beam option',`(2) 2x6 and (2) 2x8 work for the 6'-0" and 6'-9" bays but not the ${ftin(Math.max(...pbm.spans))} bay. Adding one post mid-bay (Framing options → Porch posts) drops the whole beam to (${alt.plies}) ${alt.size}.`); }
+  if(STATS.entry){ const e=STATS.entry; push('Spans','ok','Entry gable over the steps',`8/12 gable, ${ftin(2*e.HW)} wide between the step posts (widened from 4'-0" on A-4). Ridge is level, ${ftin(e.zR-e.zE)} above the porch eave, ${e.atWall?`and runs into the house wall ${ftin(e.wallRise)} above the porch roof (valleys ${ftin(2*e.wallHW)} apart at the wall), so 2x6 nailers on the wall pick up the sheathing and step flashing is needed there`:`and dies into the 2/12 porch roof ${ftin(-e.yEnd)} from the wall`}. Stick framed on the porch sheathing: 2x8 valley plates laid flat, a level 2x8 ridge board, ${STATS.entryRafters} 2x6 rafters @ 16" (including the front pair) and 2x4 gable studs for the arched trim.`); }
+  push('Spans','ok','Shed & porch rafters 2x6 #2 SYP @ 24"',`Rear shed (3/12) spans ${ftin(BK-DP)}; front porch (2/12) spans 8'-0"; both under the ~13'-0" allowable (20 psf live, 10 dead). Bedroom ceiling joists 2x6 @ 16" span ${ftin(BK-DP)} (no attic storage).`);
+  { const ledgerTop=SHED_SEAT+plumb(5.5/12,REAR_P)+0.04, sill=Math.min(...(wallById('U1').openings||[]).map(o=>o.sill??99));
+    push('Heights & roof geometry', sill-ledgerTop>=0.67?'ok':'warn','Rear shed meets the main wall',`At 3/12 the shed roof reaches ${ftin(ledgerTop)} at the main rear wall, above the 2nd floor deck (${ftin(SUB2)}), so the ledger fastens to the loft wall studs with structural screws and solid blocking. Loft window sills are at ${ftin(sill)}, leaving ${ftin(sill-ledgerTop)} for step flashing and siding.`); }
+  push('Spans','info',`Main roof trusses (${STATS.trusses}) @ 24" o.c.`,`26'-0" asymmetrical scissor bearing on rear plate ${ftin(PLATE2B)} and knee plate ${ftin(PLATE2F)}; gable ends framed as raked 2x6 walls with 12" ladder overhang. Truss pricing is a placeholder until the truss quote is in.`);
+  // SE best practice
+  const bp=[
+    ['ok','PT bottom plates on slab, sill sealer under exterior plates','Ground-contact SYP plates; sealer doubles as air seal.'],
+    ['ok','1/2" anchor bolts @ 6\' o.c. with 3×3 plate washers','Within 12" of every plate end (R403.1.6); plate washers for high-wind zones.'],
+    ['ok','Continuous load path','H2.5A at every truss and rafter bearing; MSTA36 straps across the floor @ 48".'],
+    ['ok','#2 Southern Yellow Pine framing','Regional species; every piece cut from standard 8\'–20\' stock.'],
+    ['ok','2x6 exterior walls, insulated 2-ply headers','Matches the 6-1/2" exterior wall note on A-1. California corners and backers counted.'],
+    ['ok','7/16" radiant-barrier OSB roof deck with H-clips','Cuts attic heat gain in the cooling-dominated Southeast.'],
+    ['ok','23/32" T&G subfloor, glued and screwed','Long edge across joists, staggered 4\'.'],
+    ['ok','Fire blocking in gable walls over 10\'','Mid-height row in the raked loft walls (R602.8).'],
+    ['info','Termite protection not priced','Consider borate-treated framing or a soil treatment for the slab.'],
+  ];
+  for(const [st,t,d] of bp) push('Southeast best practice',st,t,d);
+  return C;
+}
+
+/* =====================================================================
+   8. THREE.JS SCENE
+   ===================================================================== */
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#10171e');
+scene.fog=new THREE.Fog('#10171e',140,260);
+const persp=new THREE.PerspectiveCamera(38,1,0.5,600);
+const ORTHO_H=24; const ortho=new THREE.OrthographicCamera(-ORTHO_H,ORTHO_H,ORTHO_H,-ORTHO_H,-300,600);
+let cam=persp;
+const target=new THREE.Vector3(0,8,1);
+persp.position.set(46,34,58);
+const controls=new OrbitControls(persp,renderer.domElement);
+controls.target.copy(target); controls.enableDamping=true; controls.dampingFactor=0.09; controls.maxDistance=220; controls.minDistance=6;
+controls.update();
+
+scene.add(new THREE.HemisphereLight('#d4dde8','#262c33',1.1));
+const sun=new THREE.DirectionalLight('#fff1dc',1.9); sun.position.set(38,60,30); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:1,far:200}); sun.shadow.bias=-0.0006;
+scene.add(sun);
+const fill=new THREE.DirectionalLight('#9fb8d6',0.55); fill.position.set(-40,25,-30); scene.add(fill);
+
+const toV=([X,Y,Z])=>new THREE.Vector3(X-15,Z,14-Y);
+// site: slab + porch slab + grid
+const concrete=new THREE.MeshStandardMaterial({color:'#3a4149',roughness:1});
+const slab=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),concrete); slab.receiveShadow=true; scene.add(slab);
+const pslab=new THREE.Mesh(new THREE.BoxGeometry(26+2/12,0.5,8),concrete); pslab.position.copy(toV([15,-4,-0.27])); pslab.receiveShadow=true; scene.add(pslab);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(400,400),new THREE.MeshStandardMaterial({color:'#121a21',roughness:1})); ground.rotation.x=-Math.PI/2; ground.position.y=-0.52; ground.receiveShadow=true; scene.add(ground);
+const grid=new THREE.GridHelper(160,80,'#22303c','#1a252f'); grid.position.y=-0.5; scene.add(grid);
+
+const boxGeo=new THREE.BoxGeometry(1,1,1);
+const matCache=new Map();
+function mat(color,op=1){ const k=color+'|'+op; if(!matCache.has(k)) matCache.set(k,new THREE.MeshStandardMaterial({color,roughness:0.82,metalness:0,transparent:op<1,opacity:op,side:op<1?THREE.DoubleSide:THREE.FrontSide,depthWrite:op>=1}));
+  return matCache.get(k); }
+const selMat=new THREE.MeshStandardMaterial({color:'#ffd27a',emissive:'#7a4c00',emissiveIntensity:0.9,roughness:0.6});
+
+const groups={}; for(const L of LAYERS){ const g=new THREE.Group(); g.name=L.id; groups[L.id]=g; scene.add(g); }
+let meshes=[];
+function buildScene(){
+  for(const g of Object.values(groups)){ for(const c of [...g.children]){ if(c.geometry!==boxGeo) c.geometry.dispose(); g.remove(c); } }
+  meshes=[]; selected=null; document.getElementById('sel').hidden=true;
+  slab.scale.set(WD,0.5,BK); slab.position.copy(toV([15,BK/2,-0.25]));
+  M.forEach((m,i)=>{ const g=m.g; if(!g) return; let mesh;
+    const op = g.op ?? (m.layer==='wsheath'?0.9:1);
+    if(g.t==='box'){ mesh=new THREE.Mesh(boxGeo,mat(m.color,op)); mesh.position.copy(toV(g.c)); mesh.scale.set(g.s[0],g.s[2],g.s[1]); }
+    else if(g.t==='stick'){ const a=toV(g.a), b=toV(g.b); mesh=new THREE.Mesh(boxGeo,mat(m.color,op)); mesh.position.copy(a).add(b).multiplyScalar(0.5); mesh.lookAt(b); mesh.scale.set(g.w,g.d,a.distanceTo(b)); }
+    else if(g.t==='tri'){ const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(g.pts.flatMap(p=>{const v=toV(p); return [v.x,v.y,v.z];}),3)); geo.computeVertexNormals();
+      const k=m.color+'|tri'; if(!matCache.has(k)) matCache.set(k,new THREE.MeshStandardMaterial({color:m.color,roughness:0.85,side:THREE.DoubleSide})); mesh=new THREE.Mesh(geo,matCache.get(k)); }
+    else if(g.t==='shape'){ const sh=new THREE.Shape(g.pts.map(([u,v])=>new THREE.Vector2(u,v)));
+      for(const h of g.holes) sh.holes.push(new THREE.Path(h.map(([u,v])=>new THREE.Vector2(u,v))));
+      mesh=new THREE.Mesh(new THREE.ShapeGeometry(sh),mat(m.color,op));
+      if(g.axis==='x'){ mesh.position.set(-15,0,14-g.outer); } else { mesh.rotation.y=Math.PI/2; mesh.position.set(g.outer-15,0,14); } }
+    if(!mesh) return;
+    mesh.castShadow = op>=0.9; mesh.receiveShadow=true;
+    mesh.userData={mi:i,baseY:mesh.position.y,lvl:m.lvl||0,mat:mesh.material};
+    groups[m.layer].add(mesh); meshes.push(mesh);
+  });
+  applyVisibility(); applyExplode();
+}
+function applyVisibility(){ for(const L of LAYERS) groups[L.id].visible=state.layers[L.id].vis; }
+function applyExplode(){ const e=state.explode*6; for(const m of meshes) m.position.y=m.userData.baseY+e*m.userData.lvl; dimsDirty=true; }
+
+/* ---------- dimensions overlay ---------- */
+const dimsGroup=new THREE.Group(); scene.add(dimsGroup);
+const labelsEl=document.getElementById('labels'); let dimLabels=[]; let dimsDirty=true;
+function buildDims(){
+  const DIMDEF=[
+    {a:[0,-11,0],b:[WD,-11,0],t:"30'-0\""},
+    {a:[-4,0,0],b:[-4,DP,0],t:"26'-0\""},
+    {a:[-4,DP,0],b:[-4,BK,0],t:ftin(BK-DP)},
+    {a:[-8,0,0],b:[-8,BK,0],t:ftin(BK)},
+    {a:[33,-8,0],b:[33,0,0],t:"8'-0\" porch"},
+    {a:[0,BK+3,0],b:[14.5,BK+3,0],t:"14'-6\" patio"},
+    {a:[14.5,BK+3,0],b:[WD,BK+3,0],t:"15'-6\""},
+  ];
+  const HDEF=[[PLATE1,`Plate ${ftin(PLATE1)}`],[SUB2,`Subfloor ${ftin(SUB2)}`],[PLATE2B,`Plate ${ftin(PLATE2B)}`],[RTC,`Ridge ${ftin(RTC+0.04)} (dwg 21.8')`]];
+  for(const c of [...dimsGroup.children]){ c.geometry.dispose(); dimsGroup.remove(c); }
+  labelsEl.innerHTML=''; dimLabels=[];
+  const lm=new THREE.LineBasicMaterial({color:'#e6b062',transparent:true,opacity:0.75});
+  const hm=new THREE.LineBasicMaterial({color:'#73a9de',transparent:true,opacity:0.75});
+  const seg=(pts,m)=>{ const g=new THREE.BufferGeometry().setFromPoints(pts); dimsGroup.add(new THREE.LineSegments(g,m)); };
+  for(const d of DIMDEF){ const a=toV(d.a), b=toV(d.b); a.y=b.y=0.05; const dir=b.clone().sub(a).normalize(); const n=new THREE.Vector3(-dir.z,0,dir.x).multiplyScalar(0.6);
+    seg([a,b, a.clone().add(n),a.clone().sub(n), b.clone().add(n),b.clone().sub(n)],lm);
+    const el=document.createElement('div'); el.className='dl'; el.textContent=d.t; labelsEl.appendChild(el); dimLabels.push({el,p:a.clone().add(b).multiplyScalar(0.5)}); }
+  const base=toV([WD+3,YR,0]); const top=toV([WD+3,YR,RTC]);
+  const pts=[base,top]; for(const [z] of HDEF){ const p=toV([WD+3,YR,z]); pts.push(p.clone().add(new THREE.Vector3(-0.6,0,0)),p.clone().add(new THREE.Vector3(0.6,0,0))); }
+  seg(pts,hm);
+  for(const [z,t] of HDEF){ const el=document.createElement('div'); el.className='dl h'; el.textContent=t; labelsEl.appendChild(el); dimLabels.push({el,p:toV([WD+3,YR,z]).add(new THREE.Vector3(2.8,0,0))}); }
+  dimsGroup.visible=state.dims; labelsEl.hidden=!state.dims;
+}
+const _v=new THREE.Vector3();
+function updateLabels(){ if(!state.dims) return; const w=stage.clientWidth, h=stage.clientHeight;
+  for(const d of dimLabels){ _v.copy(d.p).project(cam); const vis=_v.z<1&&_v.z>-1; d.el.style.display=vis?'':'none'; if(vis){ d.el.style.left=((_v.x+1)/2*w)+'px'; d.el.style.top=((1-_v.y)/2*h)+'px'; } } }
+
+/* ---------- camera / views ---------- */
+function resize(){ const w=stage.clientWidth||1, h=stage.clientHeight||1; renderer.setSize(w,h,false); persp.aspect=w/h; persp.updateProjectionMatrix();
+  const a=w/h; ortho.left=-ORTHO_H*a; ortho.right=ORTHO_H*a; ortho.top=ORTHO_H; ortho.bottom=-ORTHO_H; ortho.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+const VIEWS={front:[0,0,1],back:[0,0,-1],left:[-1,0,0],right:[1,0,0],top:[0,1,0.0001],bottom:[0,-1,0.0001],iso:[0.72,0.55,0.95]};
+let anim=null;
+function fitDist(){ return 74; }
+function setView(name){ const d=new THREE.Vector3(...VIEWS[name]).normalize(); const cur=cam.position.clone().sub(controls.target);
+  anim={s0:cur.clone().normalize(),s1:d,l0:cur.length(),l1:name==='iso'?fitDist():64,t0:performance.now(),tg0:controls.target.clone(),tg1:target.clone(),z0:ortho.zoom,z1:1};
+  document.querySelectorAll('.vb[data-v]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===name?'true':'false')); }
+const qI=new THREE.Quaternion(), qT=new THREE.Quaternion(), qS=new THREE.Quaternion();
+function stepAnim(now){ if(!anim) return; let t=Math.min(1,(now-anim.t0)/650); const e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  qT.setFromUnitVectors(anim.s0,anim.s1); qS.slerpQuaternions(qI,qT,e); const dir=anim.s0.clone().applyQuaternion(qS);
+  controls.target.lerpVectors(anim.tg0,anim.tg1,e);
+  cam.position.copy(controls.target).addScaledVector(dir, anim.l0+(anim.l1-anim.l0)*e);
+  if(cam===ortho){ ortho.zoom=anim.z0+(anim.z1-anim.z0)*e; ortho.updateProjectionMatrix(); }
+  cam.lookAt(controls.target); if(t>=1) anim=null; }
+function setOrtho(on){ if(on===state.ortho) return; state.ortho=on; const from=cam, to=on?ortho:persp; const off=from.position.clone().sub(controls.target);
+  const tanH=Math.tan(THREE.MathUtils.degToRad(persp.fov/2));
+  if(on){ ortho.zoom=ORTHO_H/(off.length()*tanH); to.position.copy(controls.target).add(off.clone().normalize().multiplyScalar(120)); }
+  else { const dist=ORTHO_H/(ortho.zoom*tanH); to.position.copy(controls.target).add(off.clone().normalize().multiplyScalar(dist)); }
+  to.updateProjectionMatrix(); to.lookAt(controls.target); cam=to; controls.object=to; controls.update();
+  document.getElementById('b-ortho').setAttribute('aria-pressed',on?'true':'false'); }
+
+/* ---------- view cube ---------- */
+const cubeEl=document.getElementById('cube'); const H=26;
+const FT={front:`translateZ(${H}px)`,back:`rotateY(180deg) translateZ(${H}px)`,right:`rotateY(90deg) translateZ(${H}px)`,left:`rotateY(-90deg) translateZ(${H}px)`,top:`rotateX(90deg) translateZ(${H}px)`,bottom:`rotateX(-90deg) translateZ(${H}px)`};
+cubeEl.querySelectorAll('.face').forEach(f=>{ f.style.transform=FT[f.dataset.v]; f.addEventListener('click',()=>setView(f.dataset.v)); });
+const _m=new THREE.Matrix4();
+function updateCube(){ _m.extractRotation(cam.matrixWorldInverse); const e=_m.elements;
+  cubeEl.style.transform=`matrix3d(${e[0]},${-e[1]},${e[2]},0,${-e[4]},${e[5]},${-e[6]},0,${e[8]},${-e[9]},${e[10]},0,0,0,0,1)`; }
+
+/* ---------- picking ---------- */
+const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(); let selected=null, downXY=null;
+renderer.domElement.addEventListener('pointerdown',e=>{downXY=[e.clientX,e.clientY];});
+renderer.domElement.addEventListener('pointerup',e=>{ if(!downXY||Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>4) return;
+  if(measuring){ measureClick(e); return; }
+  const r=renderer.domElement.getBoundingClientRect(); ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(ptr,cam);
+  const hits=ray.intersectObjects(meshes.filter(m=>m.parent.visible),false); select(hits[0]?.object||null); });
+function select(mesh){ if(selected) selected.material=selected.userData.mat; selected=mesh; const box=document.getElementById('sel');
+  if(!mesh){ box.hidden=true; return; } mesh.material=selMat; const m=M[mesh.userData.mi];
+  const pb=m.sku?PB[m.sku]:null; const len = m.area? `${num(m.area)} sf` : (m.len?ftin(m.len):'—');
+  let stock=''; if(state.cutopt && isDim(m.sku) && (m.mode==='piece'||m.mode==='lf')) stock='cut-optimized from stock'; else if(m.mode==='piece'){ const s=stockLen(m.len); stock=s?`${s}' stock`:'spliced 16\'s'; } else if(m.mode==='lf') stock='nested from 16\' stock'; else if(m.mode==='lfx') stock='by the LF'; else if(m.mode==='area') stock='4×8 sheets'; else if(m.mode==='none') stock='priced per truss';
+  box.innerHTML=`<button aria-label="Clear selection" id="selx">×</button><h4>${esc(m.label.split(' · ')[0])}</h4><dl>
+   <dt>Material</dt><dd>${esc(pb?pb.name:'Truss member (by manufacturer)')}</dd><dt>Length</dt><dd>${len}</dd><dt>Ordering</dt><dd>${stock}</dd>
+   <dt>Layer</dt><dd>${esc(LBYID[m.layer].name)}</dd>${m.label.includes(' · ')?`<dt>Location</dt><dd>${esc(m.label.split(' · ').slice(1).join(' · '))}</dd>`:''}</dl>`;
+  box.hidden=false; document.getElementById('selx').onclick=()=>select(null); }
+addEventListener('keydown',e=>{ if(e.target.matches('input,select,textarea')) return; const k=e.key.toLowerCase();
+  if(state.view!=='3d') return;
+  const map={f:'front',b:'back',l:'left',r:'right',t:'top',i:'iso'}; if(map[k]) setView(map[k]);
+  if(k==='m') setMeasuring(!measuring);
+  if(e.key==='Escape'){ if(measuring&&mStart){ mStart=null; hidePreview(); } else if(measuring) setMeasuring(false); else select(null); } });
+
+/* ---------- tape measure ---------- */
+const MCOL='#53d1e8';
+const measGroup=new THREE.Group(); measGroup.renderOrder=999; scene.add(measGroup);
+const mLabels=document.getElementById('mlabels'), mPanel=document.getElementById('mpanel');
+const mLineMat=new THREE.LineBasicMaterial({color:MCOL,depthTest:false,transparent:true});
+const mDashMat=new THREE.LineDashedMaterial({color:MCOL,depthTest:false,transparent:true,dashSize:0.35,gapSize:0.2,opacity:0.9});
+const mDotMat=new THREE.MeshBasicMaterial({color:MCOL,depthTest:false,transparent:true});
+const mDotGeo=new THREE.SphereGeometry(0.11,12,8);
+let measuring=false, mStart=null, measures=[], mSeq=0;
+const cursorDot=new THREE.Mesh(new THREE.RingGeometry(0.16,0.26,24),new THREE.MeshBasicMaterial({color:MCOL,depthTest:false,transparent:true,side:THREE.DoubleSide}));
+cursorDot.visible=false; cursorDot.renderOrder=1000; scene.add(cursorDot);
+const prevLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),mDashMat); prevLine.visible=false; prevLine.renderOrder=1000; scene.add(prevLine);
+const prevLabel=document.createElement('div'); prevLabel.className='ml live'; prevLabel.hidden=true; mLabels.appendChild(prevLabel);
+let prevEnd=null;
+const toPlan = v => ({X:v.x+15, Y:14-v.z, Z:v.y});
+function setMeasuring(on){ measuring=on; document.getElementById('b-meas').setAttribute('aria-pressed',on); document.getElementById('viewer').classList.toggle('measuring',on);
+  if(on) select(null); else { mStart=null; hidePreview(); cursorDot.visible=false; } renderMeasPanel(); }
+function hidePreview(){ prevLine.visible=false; prevLabel.hidden=true; prevEnd=null; }
+const _c=new THREE.Vector3(), _s=new THREE.Vector3();
+// Snap to the nearest corner / edge midpoint / face center of the member under the cursor (within 14 px)
+function snapPoint(hit, e){
+  const r=renderer.domElement.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top;
+  const cands=[]; const o=hit.object;
+  if(o.geometry===boxGeo){ for(const x of [-.5,0,.5]) for(const y of [-.5,0,.5]) for(const z of [-.5,0,.5]){ const n=(x===0)+(y===0)+(z===0); if(n>1) continue; cands.push(new THREE.Vector3(x,y,z).applyMatrix4(o.matrixWorld)); } }
+  else if(o.geometry?.attributes?.position && o!==ground){ const pa=o.geometry.attributes.position; for(let i=0;i<pa.count;i++) cands.push(new THREE.Vector3().fromBufferAttribute(pa,i).applyMatrix4(o.matrixWorld)); }
+  let best=null, bd=14;
+  for(const c of cands){ _s.copy(c).project(cam); const sx=(_s.x+1)/2*r.width, sy=(1-_s.y)/2*r.height; const d=Math.hypot(sx-mx,sy-my); if(d<bd){ bd=d; best=c; } }
+  return {p:(best||hit.point).clone(), snapped:!!best};
+}
+function pickMeasure(e){
+  const r=renderer.domElement.getBoundingClientRect(); ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(ptr,cam);
+  const hits=ray.intersectObjects([...meshes.filter(m=>m.parent.visible),slab,pslab,ground],false); if(!hits.length) return null;
+  let {p,snapped}=snapPoint(hits[0],e);
+  if(mStart && e.shiftKey){ const d=p.clone().sub(mStart); const ax=['x','y','z'].reduce((a,b)=>Math.abs(d[b])>Math.abs(d[a])?b:a,'x'); for(const k of ['x','y','z']) if(k!==ax) p[k]=mStart[k]; }
+  return {p,snapped,normal:hits[0].face?.normal?.clone().transformDirection(hits[0].object.matrixWorld)};
+}
+function fmtDelta(a,b){ const A=toPlan(a), B=toPlan(b); return {dx:Math.abs(B.X-A.X), dy:Math.abs(B.Y-A.Y), dz:Math.abs(B.Z-A.Z)}; }
+renderer.domElement.addEventListener('pointermove',e=>{ if(!measuring) return; const h=pickMeasure(e);
+  if(!h){ cursorDot.visible=false; return; }
+  cursorDot.visible=true; cursorDot.position.copy(h.p); cursorDot.lookAt(cam.position); cursorDot.scale.setScalar(h.snapped?1.25:0.8);
+  if(mStart){ prevLine.geometry.setFromPoints([mStart,h.p]); prevLine.computeLineDistances(); prevLine.visible=true; prevEnd=h.p; prevLabel.hidden=false; prevLabel.textContent=ftin(mStart.distanceTo(h.p)); } });
+function measureClick(e){ const h=pickMeasure(e); if(!h) return;
+  if(!mStart){ mStart=h.p; return; }
+  if(mStart.distanceTo(h.p)<0.02) return;
+  addMeasure(mStart,h.p); mStart=null; hidePreview(); }
+function addMeasure(a,b){ const g=new THREE.Group();
+  const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),mLineMat); ln.renderOrder=999; g.add(ln);
+  for(const p of [a,b]){ const d=new THREE.Mesh(mDotGeo,mDotMat); d.position.copy(p); d.renderOrder=999; g.add(d); }
+  measGroup.add(g); const el=document.createElement('div'); el.className='ml'; const id=++mSeq; el.textContent=`${id} · ${ftin(a.distanceTo(b))}`; mLabels.appendChild(el);
+  measures.push({id,a:a.clone(),b:b.clone(),g,el}); renderMeasPanel(); }
+function removeMeasure(id){ const i=measures.findIndex(m=>m.id===id); if(i<0) return; const m=measures[i];
+  measGroup.remove(m.g); m.g.children[0].geometry.dispose(); m.el.remove(); measures.splice(i,1); renderMeasPanel(); }
+function renderMeasPanel(){
+  if(!measuring && !measures.length){ mPanel.hidden=true; return; }
+  mPanel.hidden=false;
+  mPanel.innerHTML=`<h4>Tape measure ${measures.length?'<button id="m-clear">Clear all</button>':''}</h4>
+    ${measuring?'<p>Click two points. Snaps to member corners and edges; hold Shift to lock to an axis. Esc cancels.</p>':''}
+    ${measures.map(m=>{ const d=fmtDelta(m.a,m.b); return `<div class="mrow"><span class="n">${m.id}</span><b>${ftin(m.a.distanceTo(m.b))}</b><button class="x" data-id="${m.id}" aria-label="Delete dimension ${m.id}">×</button>
+      <small>across ${ftin(d.dx)} · depth ${ftin(d.dy)} · rise ${ftin(d.dz)}</small></div>`; }).join('')}`;
+  mPanel.querySelectorAll('.x').forEach(b=>b.onclick=()=>removeMeasure(+b.dataset.id));
+  const c=document.getElementById('m-clear'); if(c) c.onclick=()=>{ [...measures].forEach(m=>removeMeasure(m.id)); };
+}
+function updateMeasLabels(){ if(!measures.length && prevLabel.hidden) return; const w=stage.clientWidth, h=stage.clientHeight;
+  const place=(el,a,b)=>{ _v.copy(a).add(b).multiplyScalar(0.5).project(cam); const vis=_v.z<1&&_v.z>-1; el.style.display=vis?'':'none'; if(vis){ el.style.left=((_v.x+1)/2*w)+'px'; el.style.top=((1-_v.y)/2*h)+'px'; } };
+  for(const m of measures) place(m.el,m.a,m.b);
+  if(!prevLabel.hidden && mStart && prevEnd) place(prevLabel,mStart,prevEnd); }
+document.getElementById('b-meas').addEventListener('click',()=>setMeasuring(!measuring));
+
+/* ---------- 2D floor plans (generated from the same walls, openings, rooms and fixtures) ---------- */
+const planEl=document.getElementById('plan'), psvg=document.getElementById('plansvg'), ptag=document.getElementById('plantag');
+let planVB=null;
+const PCP={stud:'#3d3d3d',dw:'#b9b9b9',sh:'#8a8a8a',dim:'#222222',idim:'#1f5f99',txt:'#000000',mut:'#666666',warn:'#c0392b',furn:'#7a7a7a',open:'#222222',slab:'#9a9a9a'};
+const PC={stud:'#e9e4d8',dw:'#7fb0d6',sh:'#b8925e',dim:'#e6b062',idim:'#73a9de',txt:'#e9e4d8',mut:'#8c99a5',warn:'#ff7d5c',furn:'#8fb3c9',open:'#cfd8e1',slab:'#3a4149'};
+function setMode(m){ state.view=m; document.querySelectorAll('#row-mode .vb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
+  const plan=m!=='3d'; planEl.hidden=!plan; document.getElementById('row-plan').hidden=!plan; document.getElementById('row-3a').hidden=plan; document.getElementById('row-3b').hidden=plan;
+  document.querySelector('.vc').hidden=plan; document.querySelector('.hint').hidden=plan;
+  if(plan){ if(measuring) setMeasuring(false); select(null); planVB=null; renderPlan(); } }
+function planFit(lvl){ return lvl===1 ? {x:-7.5,y:-(BK+9),w:45,h:BK+9+19} : {x:-7.5,y:-34,w:45,h:45}; }
+function renderPlan(opts={}){
+  const PRINT=!!opts.print;
+  if(!PRINT && state.view==='3d') return;
+  const lvl=PRINT?opts.lvl:(state.view==='p1'?1:2), fin=PRINT?true:state.planFin, mode=fin?'fin':'frame', base=lvl===1?0:SUB2, DIMS=PRINT?true:state.planDims;
+  const C=PRINT?PCP:PC;
+  if(!PRINT && !planVB) planVB=planFit(lvl);
+  const o=[]; const P=(X,Y)=>`${(+X).toFixed(3)},${(-Y).toFixed(3)}`;
+  const rect=(x0,y0,x1,y1,fill,extra='')=>o.push(`<rect x="${Math.min(x0,x1).toFixed(3)}" y="${(-Math.max(y0,y1)).toFixed(3)}" width="${Math.abs(x1-x0).toFixed(3)}" height="${Math.abs(y1-y0).toFixed(3)}" fill="${fill}" ${extra}/>`);
+  const line=(a,b,st,wd=0.04,extra='')=>o.push(`<line x1="${a[0].toFixed(3)}" y1="${(-a[1]).toFixed(3)}" x2="${b[0].toFixed(3)}" y2="${(-b[1]).toFixed(3)}" stroke="${st}" stroke-width="${wd}" ${extra}/>`);
+  // Labels are collected first and placed afterwards in priority order, sliding or dropping any that would overlap
+  const labs=[]; const lab=(X,Y,t,sz,fill,opt={})=>labs.push({X,Y,t:String(t),sz,fill,prio:2,cands:[[0,0]],...opt});
+  // site outlines
+  if(lvl===1){ rect(0,0,WD,BK,'none',`stroke="${C.slab}" stroke-width="0.06"`); rect(1+11/12,-8,WD-(1+11/12),0,(PRINT?'#efefef':'rgba(58,65,73,.35)'),`stroke="${C.slab}" stroke-width="0.05"`);
+    rect(0,DP,14.5,BK,(PRINT?'#efefef':'rgba(58,65,73,.35)')); line([0,12.0],[STATS.stairHole?STATS.b1End:WD,12.0],C.mut,0.035,'stroke-dasharray="0.4 0.25"'); lab(4.2,12.25,'FLUSH BEAM B1 ABOVE',0.36,C.mut,{prio:4,drop:true,cands:[[0,0],[3,0],[6,0]]});
+    for(const m of M) if(m.cat==='Posts' && m.g && m.g.c[2]<6){ const [x,y]=m.g.c; rect(x-0.23,y-0.23,x+0.23,y+0.23,'none',`stroke="${C.stud}" stroke-width="0.04"`); } }
+  else { rect(9.208,T6,WD-T6,BEAM_FACE(),(PRINT?'#f4f8fb':'rgba(115,169,222,.06)'),`stroke="${C.mut}" stroke-width="0.04" stroke-dasharray="0.35 0.2"`);
+    line([9.208,T6],[WD-T6,BEAM_FACE()],C.mut,0.02); line([9.208,BEAM_FACE()],[WD-T6,T6],C.mut,0.02); }
+  // stair: lower flight → landing (front-right corner) → upper flight to the loft (A-1 / A-2)
+  { const S=stairGeom(), cut=S.HL+4.5*S.rh, ds='stroke-dasharray="0.3 0.18"';
+    const yCut = lvl===1 ? Math.min(S.YT, S.YL + Math.max(0,(cut-S.HL)/S.rh)*S.tU) : S.YL;
+    const stOn=`stroke="${C.open}" stroke-width="0.035"`, stDa=`stroke="${C.open}" stroke-width="0.03" ${ds}`;
+    // lower flight + landing: solid on L1, dashed (below) on L2
+    const lo = lvl===1 ? stOn : stDa, loT = lvl===1 ? '' : ds;
+    if(S.nLT>0) rect(S.XS,S.Y0,S.X0,S.YL,'none',lo); for(let i=1;i<=S.nLT;i++){ const x=S.XS+(i-1)*S.T; if(i>1) line([x,S.Y0],[x,S.YL],C.open,0.02,loT); }
+    rect(S.X0,S.Y0,S.X1,S.YL,'none',lo);
+    // upper flight
+    if(lvl===1){ rect(S.X0,S.YL,S.X1,yCut,'none',stOn); rect(S.X0,yCut,S.X1,S.YT,'none',stDa);
+      for(let i=1;i<S.nUT+1;i++){ const y=S.YL+i*S.tU; if(y>=S.YT-0.01) break; line([S.X0,y],[S.X1,y],C.open,0.02,y>yCut?ds:''); }
+      const z=0.35; line([S.X0,yCut-z],[S.X0+S.W*0.45,yCut+z*0.6],C.open,0.03); line([S.X0+S.W*0.45,yCut+z*0.6],[S.X0+S.W*0.55,yCut-z*0.6],C.open,0.03); line([S.X0+S.W*0.55,yCut-z*0.6],[S.X1,yCut+z],C.open,0.03);
+      line([S.nLT>0?S.XS+0.3:S.X0-0.9,(S.Y0+S.YL)/2],[S.X0+S.W/2,(S.Y0+S.YL)/2],C.txt,0.03); line([S.X0+S.W/2,(S.Y0+S.YL)/2],[S.X0+S.W/2,S.YL+1.6],C.txt,0.03);
+      line([S.X0+S.W/2-0.22,S.YL+1.3],[S.X0+S.W/2,S.YL+1.6],C.txt,0.03); line([S.X0+S.W/2+0.22,S.YL+1.3],[S.X0+S.W/2,S.YL+1.6],C.txt,0.03);
+      if(S.nLT>0) lab((S.XS+S.X0)/2,(S.Y0+S.YL)/2+0.55,'UP',0.5,C.txt,{prio:1,bold:true}); else { lab(S.X0-1.0,(S.Y0+S.YL)/2+0.5,'UP',0.5,C.txt,{prio:1,bold:true}); lab(S.X0-1.0,(S.Y0+S.YL)/2-0.55,'1 STEP',0.26,C.mut,{prio:3,drop:true}); }
+      lab(S.X0+S.W/2,S.Y0+0.55,'LANDING',0.3,C.mut,{prio:3,drop:true});
+      }
+    else { rect(S.X0,S.YL,S.X1,S.YT,'none',stOn); for(let i=1;i<S.nUT;i++){ const y=S.YL+i*S.tU; line([S.X0,y],[S.X1,y],C.open,0.02); }
+      line([S.X0+S.W/2,S.YT-0.6],[S.X0+S.W/2,S.YL+0.9],C.txt,0.03); line([S.X0+S.W/2-0.22,S.YL+1.2],[S.X0+S.W/2,S.YL+0.9],C.txt,0.03); line([S.X0+S.W/2+0.22,S.YL+1.2],[S.X0+S.W/2,S.YL+0.9],C.txt,0.03);
+      lab(S.X0+S.W/2,S.YT-1.4,'DN',0.55,C.txt,{prio:1,bold:true});
+      lab(S.X0+S.W/2,S.Y0+1.0,'LANDING BELOW',0.26,C.mut,{prio:4,drop:true}); }
+  }
+  if(lvl===1){ const vx=IX.I1+IH+0.3, vy=RF()-0.2, xo=VENT_X(), dv=`stroke-dasharray="0.22 0.12"`;
+    line([vx,vy],[xo,vy],C.idim,0.035,dv); line([xo,vy],[xo,DP+0.35],C.idim,0.035,dv); rect(xo-0.3,DP+0.1,xo+0.3,DP+0.35,'none',`stroke="${C.idim}" stroke-width="0.03"`);
+    lab(xo-0.2,DP+0.75,'DRYER VENT (IN CLG) → PATIO WALL',0.26,C.idim,{prio:3,drop:true,cands:[[0,0],[-1.2,0],[-2.4,0]]}); }
+  // walls
+  const walls=WALLS.filter(w=>Math.abs(w.base-base)<0.01);
+  for(const w of walls){ const t=w.size==='2x6'?T6:T4, half=t/2, ops=(w.openings||[]).slice().sort((a,b)=>a.c-b.c);
+    const segs=[]; let s0=w.from; for(const op of ops){ const b=op.c+op.w/2, a=op.pocket?b-op.doorW-1/12:op.c-op.w/2; if(a>s0) segs.push([s0,a]); s0=Math.max(s0,b); } if(w.to>s0) segs.push([s0,w.to]);   // pocket cavity stays drawn as wall
+    const outer = w.ext&&w.sheath ? w.sheath.side : 0;
+    const band=(s0,s1,a0,a1,fill)=>{ if(w.axis==='x') rect(s0,w.at+a0,s1,w.at+a1,fill); else rect(w.at+a0,s0,w.at+a1,s1,fill); };
+    for(const [a,b] of segs){
+      if(fin){ if(outer!==0){ band(a,b,outer*half,outer*(half+SHEATH_T),C.sh); band(a,b,-outer*half,-outer*(half+DW),C.dw); if(w.id==='W3'){ const a2=Math.max(a,14.5+T6),b2=Math.min(b,WD-T6); if(b2>a2) band(a2,b2,half,half+DW,C.dw);} }
+        else { band(a,b,half,half+DW,C.dw); band(a,b,-half,-half-DW,C.dw); } }
+      band(a,b,-half,half,C.stud); }
+    // openings
+    for(const op of ops){ const a=op.c-op.w/2, b=op.c+op.w/2, pt=(s,off)=>w.axis==='x'?[s,w.at+off]:[w.at+off,s];
+      if(op.type==='win'){ for(const off of [-half,0,half]) line(pt(a,off),pt(b,off),C.open,off?0.03:0.02); line(pt(a,-half),pt(a,half),C.open,0.03); line(pt(b,-half),pt(b,half),C.open,0.03); }
+      else if(op.pocket){ const pe=b-op.doorW-1/12; rect(...(w.axis==='x'?[a,w.at-half*0.55,pe,w.at+half*0.55]:[w.at-half*0.55,a,w.at+half*0.55,pe]),(PRINT?'#ffffff':'#10171e')); line(pt(a+0.05,0),pt(pe,0),C.open,0.09); line(pt(pe,0),pt(b,0),C.open,0.03,'stroke-dasharray="0.18 0.12"');
+        for(const off of [-half,half]) line(pt(a,off),pt(pe,off),C.mut,0.02,'stroke-dasharray="0.12 0.1"'); }
+      else if(op.bifold){ const sd=op.swing??1, m=(a+b)/2, q=(b-a)/4, dep=sd*(half+Math.min(0.55,q*0.9)); for(const [u0,u1] of [[a+0.03,m],[m,b-0.03]]){ const pk=pt((u0+u1)/2,dep); line(pt(u0,sd*half),pk,C.open,0.03); line(pk,pt(u1,sd*half),C.open,0.03); } }
+      else if(op.barn){ const sd=op.swing??1; for(const off of [-half,half]) line(pt(a,off),pt(b,off),C.mut,0.03,'stroke-dasharray="0.25 0.15"'); line(pt(a-0.15,sd*(half+0.1)),pt(b+0.15,sd*(half+0.1)),C.open,0.07); line(pt(b+0.15,sd*(half+0.1)),pt(b+op.w*0.9,sd*(half+0.1)),C.open,0.02,'stroke-dasharray="0.15 0.1"'); }
+      else if(/cased/.test(op.label)){ for(const off of [-half,half]) line(pt(a,off),pt(b,off),C.mut,0.03,'stroke-dasharray="0.25 0.15"'); }
+      else { const side = op.swing ?? (outer ? -outer : 1), r=op.w-0.06, hingeOff=side*half, hd=op.hinge==='hi'?-1:1, H0=op.hinge==='hi'?b-0.03:a+0.03; const h=pt(H0,hingeOff), tip=pt(H0,hingeOff+side*r); line(h,tip,C.open,0.035);
+        let d=''; for(let k=0;k<=16;k++){ const th=k/16*Math.PI/2, p=pt(H0+hd*r*Math.sin(th),hingeOff+side*r*Math.cos(th)); d+=(k?'L':'M')+P(p[0],p[1]); } o.push(`<path d="${d}" fill="none" stroke="${C.mut}" stroke-width="0.02"/>`); }
+      if(DIMS){ const inS=outer?-outer:1, lp=pt(op.c,inS*(half+0.4)), lp2=pt(op.c,inS*(half+0.85)), lp3=pt(op.c,-inS*(half+0.4));
+        lab(lp[0],lp[1],PRINT&&op.mark?op.mark:op.label.split(' ')[0],PRINT?0.4:0.34,PRINT&&op.mark?C.txt:C.mut,{prio:5,drop:true,rot:w.axis==='y',cands:[[0,0],[lp2[0]-lp[0],lp2[1]-lp[1]],[lp3[0]-lp[0],lp3[1]-lp[1]]]}); } } }
+  // fixtures & furnishings (synced to the 3D layer toggle)
+  if(state.layers.furn.vis) for(const f of (STATS.furn||[]).filter(f=>f.lvl===lvl)){ rect(f.x0,f.y0,f.x1,f.y1,(PRINT?'#f7f7f7':'rgba(143,179,201,.10)'),`stroke="${C.furn}" stroke-width="0.03"`);
+    const short=f.label.replace(/ \(.*\)/,'').replace('Blind corner base ','').replace('Base cabinet ','').replace('Refrigerator','FRIDGE').replace('Dishwasher','DISH').toUpperCase();
+    if((f.x1-f.x0)>0.9&&(f.y1-f.y0)>0.6){ const tall=(f.y1-f.y0)>(f.x1-f.x0)*1.4; lab((f.x0+f.x1)/2,(f.y0+f.y1)/2,short,0.28,C.furn,{prio:6,drop:true,rot:tall,cands:[[0,0],[0,0.35],[0,-0.35]]}); } }
+  // rooms
+  for(const r of ROOMS.filter(r=>r.lvl===lvl)){ const b=roomBox(r,r.raw?'raw':mode), cx=(b.x0+b.x1)/2, cy=(b.y0+b.y1)/2, room=b.w-0.35;
+    const dStr=`${ftin(b.w)} × ${ftin(b.d)}`, gStr=r.label?`${r.src==='sketch'?'sketch':'dwg'} ${r.label.replace(' X ',' × ')}`:'';
+    const nS=Math.max(0.42,Math.min(r.small?0.45:0.78, room/(r.name.length*0.5))), dS=Math.max(0.34,Math.min(r.small?0.36:0.56, room/(dStr.length*0.6))), gS=Math.max(0.3,Math.min(0.42, room/(Math.max(gStr.length,1)*0.6)));
+    const blk=[[r.name,nS,r.open?C.mut:C.txt,true]]; if(!r.small||DIMS) blk.push([dStr,dS,C.dim,false]);
+    if(r.label && !r.small){ const [lw,ld]=parseLabel(r.label), bad=Math.abs(b.w-lw)>0.51/12||Math.abs(b.d-ld)>0.51/12; blk.push([gStr,gS,bad?C.warn:C.mut,false]); }
+    const nt=r.note?r.note():null; if(nt && !r.small) blk.push([nt,gS,C.idim,false]);
+    const H=blk.reduce((a,x)=>a+x[1]*1.2,0); let yy=cy+H/2;
+    const roomCands=[[0,0],[0,-0.5],[0,0.5],[0,-1],[0,1],[0,-1.6],[0,1.6]];
+    blk.forEach(([t,sz,col,bold],i)=>{ yy-=sz*0.6; lab(cx,yy,t,sz,col,{prio:i===0?0:1,bold,cond:bold,cands:roomCands}); yy-=sz*0.6; }); }
+  // dimension strings
+  const dim=(a,b,n,label,col,sz=0.55)=>{ const A=[a[0]+n[0],a[1]+n[1]], B=[b[0]+n[0],b[1]+n[1]], L=Math.hypot(n[0],n[1])||1, nu=[n[0]/L,n[1]/L];
+    line([a[0]+nu[0]*0.15,a[1]+nu[1]*0.15],[A[0]+nu[0]*0.25,A[1]+nu[1]*0.25],col,0.018); line([b[0]+nu[0]*0.15,b[1]+nu[1]*0.15],[B[0]+nu[0]*0.25,B[1]+nu[1]*0.25],col,0.018);
+    line(A,B,col,0.022); const u=[(B[0]-A[0]),(B[1]-A[1])], ul=Math.hypot(u[0],u[1])||1; const tk=[(u[0]/ul+nu[0])*0.17,(u[1]/ul+nu[1])*0.17];
+    for(const Q of [A,B]) line([Q[0]-tk[0],Q[1]-tk[1]],[Q[0]+tk[0],Q[1]+tk[1]],col,0.04);
+    const inner=!(n[0]||n[1]), vert=Math.abs(u[1])>Math.abs(u[0]), pn=inner?(vert?[1,0]:[0,1]):nu, off=sz*0.62+0.1;
+    const mx=(A[0]+B[0])/2+pn[0]*off, my=(A[1]+B[1])/2+pn[1]*off, uu=[u[0]/ul,u[1]/ul], w=label.length*sz*0.6, sl=Math.max(0,(ul-w)/2-0.15);
+    const cands=[[0,0],[uu[0]*sl,uu[1]*sl],[-uu[0]*sl,-uu[1]*sl],[pn[0]*sz*1.25,pn[1]*sz*1.25],[-pn[0]*off*2,-pn[1]*off*2],[pn[0]*sz*1.25+uu[0]*sl,pn[1]*sz*1.25+uu[1]*sl]];
+    if(ul>0.35) lab(mx,my,label,sz,col,{prio:inner?3:2,rot:vert,drop:inner,cands}); };
+  const chain=(stops,fixed,axis,n,col)=>{ const st=[...new Set(stops.map(v=>+v.toFixed(4)))].sort((a,b)=>a-b);
+    for(let i=0;i<st.length-1;i++){ const a=axis==='x'?[st[i],fixed]:[fixed,st[i]], b=axis==='x'?[st[i+1],fixed]:[fixed,st[i+1]]; dim(a,b,n,ftin(st[i+1]-st[i]),col); } };
+  const cls=id=>(wallById(id)?.openings||[]).map(o=>o.c);
+  if(lvl===1){
+    chain([0,...cls('W1'),WD],0,'x',[0,-1.3],C.dim); dim([0,0],[WD,0],[0,-11.2],ftin(WD),C.dim);
+    chain([0,14.5,...cls('B2'),WD],BK,'x',[0,1.4],C.dim); dim([0,BK],[WD,BK],[0,3.0],ftin(WD),C.dim);
+    chain([0,...cls('W2'),DP,BK],0,'y',[-1.4,0],C.dim); dim([0,0],[0,BK],[-3.2,0],ftin(BK),C.dim);
+    chain([0,...cls('W4'),DP,...cls('B3'),BK],WD,'y',[1.4,0],C.dim); dim([WD,0],[WD,BK],[3.2,0],ftin(BK),C.dim);
+    dim([1+11/12,-8],[WD-(1+11/12),-8],[0,-1.2],ftin(WD-2*(1+11/12)),C.dim);
+  } else {
+    dim([0,0],[WD,0],[0,-1.4],ftin(WD),C.dim);
+    chain([0,...cls('U1'),WD],DP,'x',[0,1.4],C.dim); dim([0,DP],[WD,DP],[0,3.0],ftin(WD),C.dim);
+    chain([0,...cls('U3'),DP],0,'y',[-1.4,0],C.dim); chain([0,...cls('U4'),DP],WD,'y',[1.4,0],C.dim); dim([WD,0],[WD,DP],[3.2,0],ftin(DP),C.dim);
+  }
+  // interior strings, face to face (walls crossed by a line through the plan)
+  if(DIMS){
+    const across=(dir,c)=>{ const ws=walls.filter(w=>w.axis===(dir==='h'?'y':'x') && c>=w.from-0.01 && c<=w.to+0.01).sort((a,b)=>a.at-b.at);
+      const faces=ws.map(w=>{ const half=(w.size==='2x6'?T6:T4)/2, outer=w.ext&&w.sheath?w.sheath.side:0; const lo=fin?(outer===-1?SHEATH_T:DW):0, hi=fin?(outer===1?SHEATH_T:DW):0; return [w.at-half-lo,w.at+half+hi]; });
+      for(let i=0;i<faces.length-1;i++){ const a=faces[i][1], b=faces[i+1][0]; if(b-a<0.4) continue; const A=dir==='h'?[a,c]:[c,a], B=dir==='h'?[b,c]:[c,b]; dim(A,B,[0,0],ftin(b-a),C.idim,0.44); }
+      };
+    if(lvl===1){ across('h',24.9); across('h',1.6); across('v',17.8); across('v',29.1); }
+    else { across('h',1.5); across('v',29.0); }
+  }
+  // place labels: highest priority first; each tries its candidate offsets, low-priority ones drop if nothing fits
+  const placed=[];
+  const boxOf=(L,dx,dy)=>{ const w=L.t.length*L.sz*(L.cond?0.48:0.6)+0.12, h=L.sz*1.15, [bw,bh]=L.rot?[h,w]:[w,h]; return [L.X+dx-bw/2,L.Y+dy-bh/2,L.X+dx+bw/2,L.Y+dy+bh/2]; };
+  const hits=b=>placed.some(q=>b[0]<q[2]&&b[2]>q[0]&&b[1]<q[3]&&b[3]>q[1]);
+  labs.sort((a,b)=>a.prio-b.prio);
+  for(const L of labs){ let pick=null;
+    for(const [dx,dy] of L.cands){ const bx=boxOf(L,dx,dy); if(!hits(bx)){ pick=[dx,dy,bx]; break; } }
+    if(!pick){ if(L.drop) continue; pick=[L.cands[0][0],L.cands[0][1],boxOf(L,L.cands[0][0],L.cands[0][1])]; }
+    placed.push(pick[2]); const X=L.X+pick[0], Y=L.Y+pick[1];
+    const ty = PRINT ? (L.rot ? -Y : -Y+L.sz*0.35) : -Y, tx = PRINT && L.rot ? X+L.sz*0.35 : X;
+    o.push(`<text x="${tx.toFixed(3)}" y="${ty.toFixed(3)}" font-size="${L.sz.toFixed(3)}" fill="${L.fill}" text-anchor="middle"${PRINT?'':' dominant-baseline="central"'}${L.bold?' font-weight="bold"':''}${L.cond&&!PRINT?' font-family="Barlow Condensed,Arial Narrow,sans-serif" letter-spacing="0.03"':''}${L.rot?` transform="rotate(-90 ${tx.toFixed(3)} ${ty.toFixed(3)})"`:''}>${esc(PRINT?L.t.replace(/−/g,'-'):L.t)}</text>`); }
+  if(PRINT) return {inner:`<g font-family="helvetica">${o.join('')}</g>`, vb:planFit(lvl)};
+  psvg.setAttribute('viewBox',`${planVB.x} ${planVB.y} ${planVB.w} ${planVB.h}`);
+  psvg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  psvg.innerHTML=`<g font-family="IBM Plex Mono,ui-monospace,monospace">${o.join('')}</g>`;
+  ptag.innerHTML=`<b>${lvl===1?'1st':'2nd'} floor plan · synced to the 3D model</b>${fin?'Walls drawn with 1/2" drywall (blue) and 7/16" sheathing (tan); room and interior dims to finished faces.':'Framing only; room and interior dims to stud faces.'} Exterior strings run to opening centerlines and face of stud. Grey "dwg" values are the A-${lvl} labels, orange where they disagree by more than 1/2".`;
+}
+// pan & zoom
+let pDrag=null;
+psvg.addEventListener('wheel',e=>{ e.preventDefault(); if(!planVB) return; const r=psvg.getBoundingClientRect(); const sc=Math.min(r.width/planVB.w,r.height/planVB.h);
+  const ox=(r.width-planVB.w*sc)/2, oy=(r.height-planVB.h*sc)/2; const mx=planVB.x+(e.clientX-r.left-ox)/sc, my=planVB.y+(e.clientY-r.top-oy)/sc;
+  const k=Math.exp(e.deltaY*0.0015); planVB={x:mx-(mx-planVB.x)*k,y:my-(my-planVB.y)*k,w:planVB.w*k,h:planVB.h*k}; psvg.setAttribute('viewBox',`${planVB.x} ${planVB.y} ${planVB.w} ${planVB.h}`); },{passive:false});
+psvg.addEventListener('pointerdown',e=>{ pDrag={x:e.clientX,y:e.clientY,vb:{...planVB}}; psvg.setPointerCapture(e.pointerId); psvg.classList.add('drag'); });
+psvg.addEventListener('pointermove',e=>{ if(!pDrag) return; const r=psvg.getBoundingClientRect(); const sc=Math.min(r.width/pDrag.vb.w,r.height/pDrag.vb.h);
+  planVB={...pDrag.vb,x:pDrag.vb.x-(e.clientX-pDrag.x)/sc,y:pDrag.vb.y-(e.clientY-pDrag.y)/sc}; psvg.setAttribute('viewBox',`${planVB.x} ${planVB.y} ${planVB.w} ${planVB.h}`); });
+const endDrag=()=>{ pDrag=null; psvg.classList.remove('drag'); }; psvg.addEventListener('pointerup',endDrag); psvg.addEventListener('pointercancel',endDrag);
+document.querySelectorAll('#row-mode .vb').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+document.getElementById('pl-fin').addEventListener('click',e=>{ state.planFin=!state.planFin; e.currentTarget.setAttribute('aria-pressed',state.planFin); renderPlan(); });
+document.getElementById('pl-dims').addEventListener('click',e=>{ state.planDims=!state.planDims; e.currentTarget.setAttribute('aria-pressed',state.planDims); renderPlan(); });
+document.getElementById('pl-fit').addEventListener('click',()=>{ planVB=null; renderPlan(); });
+
+/* ---------- print-ready PDF set for LBM quoting (11×17, vector plans) ---------- */
+const PDF_LIBS=['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.3/dist/svg2pdf.umd.min.js'];
+let pdfLibsP=null;
+const loadScript=src=>new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=()=>rej(new Error('Could not load the PDF library from '+new URL(src).host)); document.head.appendChild(sc); });
+function loadPdfLibs(){ if(!pdfLibsP) pdfLibsP=(async()=>{ for(const u of PDF_LIBS) await loadScript(u); })().catch(e=>{ pdfLibsP=null; throw e; }); return pdfLibsP; }
+const pt = t => String(t).replace(/−/g,'-').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/–|—/g,'-').replace(/≤/g,'<=').replace(/≥/g,'>=').replace(/→/g,'->').replace(/≈/g,'~').replace(/[^\x00-\xff]/g,'');
+const strip = h => pt(String(h).replace(/<br\s*\/?>/g,' ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/\s+/g,' ').trim());
+const WTYPE={DH:'Double hung',FX:'Fixed',SC:'Casement (SC)',RS:'Slider (RS)',MU:'Tall unit (MU)'};
+function scheduleData(){
+  const wins=new Map(), doors=new Map();
+  for(const w of WALLS) for(const op of (w.openings||[])){
+    const lbl=op.label, mm=lbl.match(/^\((\d+)\)\s*(\d{4,5})([A-Z]*)/), m=mm?null:lbl.match(/^(\d{4,5})([A-Z]*)/);
+    const units=mm?+mm[1]:1, code=mm?mm[2]:(m?m[1]:lbl), suf=mm?mm[3]:(m?m[2]:'');
+    const rec=OPEN_REC.find(r=>r.id===w.id && r.label===lbl), lvl=w.base>1?2:1, loc=`${w.name} (L${lvl})`;
+    const roH=op.sill==null ? op.head-w.base : op.head-op.sill;
+    if(op.type==='win'){ const [uw,uh]=parseCode(code), key=`${code}${suf}|${units}`;
+      const e=wins.get(key)||{code:`${code}${suf}`,units,type:(units>1?`(${units}) mulled `:'')+(WTYPE[suf]||suf||'Window'),unit:`${ftin(uw/12)} × ${ftin(uh/12)}`,ro:`${ftin(op.w)} × ${ftin(roH)}`,head:ftin(op.head-w.base),hdr:rec?rec.hdr.label:'',qty:0,locs:[],ops:[]};
+      e.qty+=1; e.locs.push(loc); e.ops.push(op); wins.set(key,e); }
+    else { const kind=op.pocket?'Pocket door':op.barn?'Barn door (surface track, cased opening)':op.bifold?'Bifold closet door':/cased/.test(lbl)?'Cased opening':w.ext?'Exterior swing door':'Interior swing door';
+      const [dw,dh]=parseCode(code), key=`${code}|${kind}`;
+      const e=doors.get(key)||{code,kind,unit:/cased/.test(lbl)?'—':`${ftin(dw/12)} × ${ftin(dh/12)}`,ro:`${ftin(op.w)} × ${ftin(roH)}`,head:ftin(op.head-w.base),hdr:rec?rec.hdr.label:'',qty:0,locs:[],ops:[]};
+      e.qty+=1; e.locs.push(loc); e.ops.push(op); doors.set(key,e); } }
+  const W=[...wins.values()].sort((a,b)=>a.code.localeCompare(b.code)), D=[...doors.values()].sort((a,b)=>(a.kind>b.kind)-(a.kind<b.kind)||a.code.localeCompare(b.code));
+  W.forEach((e,i)=>{ e.mark='W'+(i+1); e.ops.forEach(o=>o.mark=e.mark); }); D.forEach((e,i)=>{ e.mark='D'+(i+1); e.ops.forEach(o=>o.mark=e.mark); });
+  return {W,D};
+}
+// white-background snapshots of the 3D model for the cover and views sheet
+function snapView(dirName, ortho){
+  const bg=scene.background, fog=scene.fog, dv=dimsGroup.visible, mv=measGroup.visible, cv=cursorDot.visible, pv=prevLine.visible, gv=ground.visible, gr=grid.visible;
+  scene.background=new THREE.Color('#ffffff'); scene.fog=null; dimsGroup.visible=false; measGroup.visible=false; cursorDot.visible=false; prevLine.visible=false; ground.visible=false; grid.visible=false;
+  const el=renderer.domElement, aspect=el.width/el.height, d=new THREE.Vector3(...VIEWS[dirName]).normalize(), tg=new THREE.Vector3(0,9,0);
+  let c; if(ortho){ const halfW=(dirName==='left'||dirName==='right')?25:18, hh=Math.max(15, halfW/aspect)*1.08; tg.y=11.2; c=new THREE.OrthographicCamera(-hh*aspect,hh*aspect,hh,-hh,-500,500); } else { c=new THREE.PerspectiveCamera(36,aspect,0.5,600); }
+  c.position.copy(tg).addScaledVector(d,ortho?150:78); c.lookAt(tg); c.updateProjectionMatrix();
+  renderer.render(scene,c); const url=el.toDataURL('image/jpeg',0.92);
+  scene.background=bg; scene.fog=fog; dimsGroup.visible=dv; measGroup.visible=mv; cursorDot.visible=cv; prevLine.visible=pv; ground.visible=gv; grid.visible=gr; renderer.render(scene,cam);
+  return {url,aspect};
+}
+async function exportPdfSet(){
+  const msg=document.getElementById('pdf-msg'), btn=document.getElementById('b-pdf');
+  btn.disabled=true; msg.textContent='Loading PDF tools…';
+  try{
+    await loadPdfLibs(); msg.textContent='Building sheets…';
+    const {jsPDF}=window.jspdf, doc=new jsPDF({orientation:'landscape',unit:'pt',format:'tabloid'});
+    const PW=1224, PH=792, MG=24, TBW=176, TBX=PW-MG-TBW, today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
+    const sch=scheduleData(); recalc();
+    const opt=[`Dimensions: ${state.geo==='resolved'?'resolved':'as drawn'}`,`Ext. studs: 2x6 @ ${state.extOC}" o.c.`,`2nd floor: ${STATS.joistName} @ ${STATS.joistOC}"`,`Headers: ${{auto:'built-up, sized',std:'built-up, deepest',lvl:'LVL'}[state.header]}`,`Porch posts: ${state.porchPosts}`,`Patio posts: ${state.patioPosts===2?'corner + mid':'corner only'}`,`Bedroom: ${state.bedClear?ftin(state.bedClear)+' clear':'as drawn'}`];
+    const framed=new Set(); let sheetNo=0; const titles={};
+    const frame=(title)=>{ const pg=doc.internal.getNumberOfPages(); if(framed.has(pg)) return; framed.add(pg); titles[pg]=title;
+      doc.setDrawColor(0); doc.setLineWidth(1.2); doc.rect(MG,MG,PW-2*MG,PH-2*MG); doc.setLineWidth(0.8); doc.line(TBX,MG,TBX,PH-MG);
+      let y=MG+26; doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.text('BASTINE HOUSE',TBX+12,y); y+=15;
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.text('Framing package · LBM quote set',TBX+12,y); y+=11; doc.text('Generated from the 3D takeoff model',TBX+12,y);
+      y+=12; doc.line(TBX,y,PW-MG,y); y+=16; doc.setFontSize(7.5); doc.setTextColor(90); doc.text('SHEET TITLE',TBX+12,y); doc.setTextColor(0); y+=14;
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); for(const ln of doc.splitTextToSize(title.toUpperCase(),TBW-24)){ doc.text(ln,TBX+12,y); y+=14; }
+      y+=4; doc.line(TBX,y,PW-MG,y); y+=16; doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(90); doc.text('FRAMING OPTIONS',TBX+12,y); doc.setTextColor(0); y+=12; doc.setFontSize(8);
+      for(const o of opt){ doc.text(pt(o),TBX+12,y); y+=11; }
+      y+=4; doc.line(TBX,y,PW-MG,y); y+=16; doc.setFontSize(7.5); doc.setTextColor(90); doc.text('NOTES',TBX+12,y); doc.setTextColor(0); y+=12; doc.setFontSize(7.5);
+      for(const ln of doc.splitTextToSize('Verify all dimensions, rough openings and structural members before ordering. Trusses, LVL and connectors to be confirmed by the supplier/engineer of record. Items flagged for review are listed on the notes sheet.',TBW-24)){ doc.text(ln,TBX+12,y); y+=10; }
+      const by=PH-MG-92; doc.line(TBX,by,PW-MG,by); doc.setFontSize(7.5); doc.setTextColor(90); doc.text('DATE',TBX+12,by+16); doc.text('SHEET',TBX+12,by+44); doc.setTextColor(0);
+      doc.setFontSize(10); doc.text(today,TBX+12,by+29); doc.setFont('helvetica','bold'); doc.setFontSize(28); doc.text('F-'+pg,TBX+12,by+76); doc.setFont('helvetica','normal'); };
+    const newSheet=(title)=>{ if(sheetNo++>0) doc.addPage('tabloid','landscape'); frame(title); };
+    const head=(t,x,y,sz=13)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(sz); doc.text(pt(t),x,y); doc.setFont('helvetica','normal'); };
+    const table=(title,o)=>doc.autoTable({theme:'grid',styles:{font:'helvetica',fontSize:7.6,cellPadding:3,lineColor:[150,150,150],lineWidth:0.4,textColor:20},headStyles:{fillColor:[45,45,45],textColor:255,fontStyle:'bold'},
+      margin:{left:MG+16,right:PW-TBX+16,top:MG+40,bottom:MG+18},didDrawPage:()=>{ const pg=doc.internal.getNumberOfPages(); if(!framed.has(pg)){ frame(title+' (cont.)'); } },...o});
+    const lastY=()=>doc.lastAutoTable.finalY;
+
+    // ---- F-1 cover ----
+    newSheet('Cover · project data & package summary');
+    head('BASTINE HOUSE · FRAMING PACKAGE FOR LBM QUOTE',MG+16,MG+34,18);
+    doc.setFontSize(9); doc.text(pt(`Plans: sheets A-1 to A-9 (10/20/2026), revised in the takeoff model. Prepared ${today}.`),MG+16,MG+50);
+    const L1A=AREA_L1, L2A=STATS.floorArea;
+    table('Cover',{startY:MG+62,tableWidth:480,head:[['Item','Value']],body:[
+      ['Footprint',`${ftin(WD)} × ${ftin(BK)} overall (main ${ftin(WD)} × ${ftin(DP)}, bedroom bump ${ftin(WD-14.5)} × ${ftin(BK-DP)})`],
+      ['Conditioned area',`${num(L1A)} sf 1st floor + ${num(L2A)} sf loft = ${num(L1A+L2A)} sf`],
+      ['Covered porch / patio',`${num(26.17*8)} sf front porch · ${num(14.5*(BK-DP))} sf rear patio`],
+      ['Foundation','Slab on grade; PT plates, anchor bolts @ 6\' o.c., sill sealer'],
+      ['Plate heights',`1st floor ${ftin(PLATE1)} · loft deck ${ftin(SUB2)} · loft rear wall ${ftin(PLATE2B)} · knee wall ${ftin(PLATE2F)}`],
+      ['Walls',`Exterior 2x6 @ ${state.extOC}" o.c., 7/16" OSB · interior 2x4 @ 16" o.c. · #2 SYP`],
+      ['2nd floor',`${STATS.joistName} @ ${STATS.joistOC}" o.c., 23/32" T&G subfloor glued & screwed`],
+      ['Main roof',`${STATS.trusses} asymmetrical scissor trusses @ 24" o.c., 4/12 rear / 8/12 front, 26'-0" span`],
+      ['Rear shed / porch','3/12 shed over bedroom & patio; 2/12 front porch with 8/12 entry gable; 2x6 rafters @ 24"'],
+      ['Roof deck','7/16" radiant-barrier OSB with H-clips'],
+      ['Quote request','Price the material list (sheet F-6) and the truss, LVL and connector items; unit price and extension columns are left blank for the supplier. Note any substitutions.'],
+    ].map(r=>r.map(pt)),columnStyles:{0:{cellWidth:120,fontStyle:'bold'}}});
+    const idxY=lastY()+22; head('SHEET INDEX',MG+16,idxY,11);
+    const sections=[]; const mark=(t)=>sections.push([doc.internal.getNumberOfPages(),t]);
+    { const iso=snapView('iso',false), iw=TBX-MG-560, ih=iw/iso.aspect; doc.addImage(iso.url,'JPEG',MG+530,MG+62,iw,Math.min(ih,420)); doc.setFontSize(8); doc.setTextColor(90); doc.text('Framing model, isometric (layers as shown in the app)',MG+530,MG+62+Math.min(ih,420)+12); doc.setTextColor(0); }
+
+    // ---- F-2 / F-3 plans (vector, 3/16" = 1'-0") ----
+    const SCALE=13.5; // pt per ft at 3/16" = 1'-0"
+    const holder=document.createElement('div'); holder.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;overflow:hidden'; document.body.appendChild(holder);
+    for(const lvl of [1,2]){
+      newSheet(lvl===1?'1st floor plan':'2nd floor plan'); mark(lvl===1?'1st floor plan':'2nd floor plan');
+      const {inner}=renderPlan({print:true,lvl});
+      const vb = lvl===1 ? {x:-5.2,y:-(BK+4.2),w:40.4,h:BK+4.2+12.6} : {x:-5.2,y:-(DP+4.2),w:40.4,h:DP+4.2+3.4};
+      const el=document.createElementNS('http://www.w3.org/2000/svg','svg'); el.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`); el.setAttribute('width',vb.w*SCALE); el.setAttribute('height',vb.h*SCALE); el.innerHTML=inner; holder.appendChild(el);
+      const w=vb.w*SCALE, h=vb.h*SCALE, x=MG+16, yy=MG+12+Math.max(0,(PH-2*MG-24-h)/2);
+      await window.svg2pdf.svg2pdf(el,doc,{x,y:yy,width:w,height:h}); el.remove();
+      const lx=x+w+30; let ly=MG+40; head(lvl===1?'1ST FLOOR PLAN':'2ND FLOOR PLAN',lx,ly,16); ly+=14; doc.setFontSize(9); doc.text('SCALE: 3/16" = 1\'-0" (on 11×17)',lx,ly); ly+=24;
+      head('LEGEND',lx,ly,10); ly+=12; doc.setFontSize(8);
+      const sw=(c,txt)=>{ doc.setFillColor(...c); doc.rect(lx,ly-7,22,8,'F'); doc.text(pt(txt),lx+30,ly); ly+=14; };
+      sw([61,61,61],'Stud core (2x6 exterior, 2x4 interior)'); sw([185,185,185],'1/2" drywall'); sw([138,138,138],'7/16" OSB sheathing');
+      ly+=6; for(const ln of doc.splitTextToSize(pt('W# / D# tags refer to the window & door schedule (F-4). Exterior strings run to opening centerlines and face of stud. Room sizes and blue interior strings are to finished faces (1/2" drywall). Grey "dwg" values are the original plan labels, red where they differ by more than 1/2".'),TBX-lx-16)){ doc.text(ln,lx,ly); ly+=11; }
+      ly+=10; head('ROOM SIZES (FINISHED)',lx,ly,10); ly+=6;
+      const rows=ROOMS.filter(r=>r.lvl===lvl).map(r=>{ const b=roomBox(r,r.raw?'raw':'fin'); return [r.name,`${ftin(b.w)} × ${ftin(b.d)}`,r.label?r.label.replace(' X ',' × '):'—']; });
+      doc.autoTable({startY:ly,theme:'grid',margin:{left:lx,right:PW-TBX+16},tableWidth:TBX-lx-16,styles:{fontSize:7.4,cellPadding:2.5,lineColor:[150,150,150],lineWidth:0.4,textColor:20},headStyles:{fillColor:[45,45,45],textColor:255},head:[['Room','Built','Drawn']],body:rows.map(r=>r.map(pt))});
+    }
+    holder.remove();
+
+    // ---- F-4 window & door schedule ----
+    newSheet('Window & door schedule'); mark('Window & door schedule');
+    head('WINDOW SCHEDULE',MG+16,MG+34);
+    table('Window & door schedule',{startY:MG+42,head:[['Mark','Qty','Size','Type','Unit W × H','Rough opening W × H','Head ht.','Header','Locations']],
+      body:sch.W.map(e=>[e.mark,String(e.qty*e.units)+(e.units>1?` (${e.qty} RO)`:''),e.code,e.type,e.unit,e.ro,e.head,e.hdr,[...new Set(e.locs)].join('; ')].map(pt)),columnStyles:{8:{cellWidth:220}}});
+    let yy=lastY()+26; head('DOOR SCHEDULE',MG+16,yy); 
+    table('Window & door schedule',{startY:yy+8,head:[['Mark','Qty','Size','Type','Door W × H','Rough opening W × H','Head ht.','Header','Locations']],
+      body:sch.D.map(e=>[e.mark,String(e.qty),e.code,e.kind,e.unit,e.ro,e.head,e.hdr,[...new Set(e.locs)].join('; ')].map(pt)),columnStyles:{8:{cellWidth:220}}});
+    yy=lastY()+14; doc.setFontSize(8); doc.setTextColor(70);
+    for(const ln of doc.splitTextToSize('Rough openings: windows unit + 1/2"; swing doors unit width + 2", height 82-1/2" for 6\'-8" doors; W/D barn door: cased 3068 opening, surface track needs a 2x8 flat backer above the head on the hall side. Head heights from top of slab / subfloor. Confirm unit sizes, egress, tempering and rough openings with the window and door supplier before ordering.',TBX-MG-40)){ doc.text(ln,MG+16,yy); yy+=10; }
+    doc.setTextColor(0);
+
+    // ---- F-5 3D views ----
+    newSheet('3D framing views'); mark('3D framing views');
+    { const views=[['iso',false,'Isometric'],['front',true,'Front (porch side)'],['left',true,'Left side'],['back',true,'Rear']];
+      const cw=(TBX-MG-48)/2, chh=(PH-2*MG-60)/2;
+      views.forEach(([v,o,t],i)=>{ const sn=snapView(v,o), cx=MG+16+(i%2)*(cw+16), cy=MG+20+Math.floor(i/2)*(chh+20); let iw=cw, ih=cw/sn.aspect; if(ih>chh-14){ ih=chh-14; iw=ih*sn.aspect; }
+        doc.addImage(sn.url,'JPEG',cx,cy,iw,ih); doc.setDrawColor(170); doc.rect(cx,cy,iw,ih); doc.setFontSize(9); doc.setTextColor(0); doc.text(pt(t),cx,cy+ih+12); }); }
+
+    // ---- material list ----
+    newSheet('Framing material list'); mark('Framing material list');
+    head('FRAMING MATERIAL LIST',MG+16,MG+34);
+    const all=takeoffAll(); const body=[];
+    let ln=0;
+    for(const cat of CAT_ORDER){ const ls=all.filter(l=>l.cat===cat).sort((a,b)=>a.desc.localeCompare(b.desc,'en',{numeric:true})); if(!ls.length) continue;
+      body.push([{content:cat.toUpperCase(),colSpan:7,styles:{fillColor:[225,225,225],fontStyle:'bold'}}]);
+      for(const l of ls) body.push([String(++ln),num(l.qty),l.unit,pt(l.desc),pt([...l.layers].join(', ')),'','']); }
+    table('Framing material list',{startY:MG+42,head:[['Line','Qty','Unit','Description','Used in','Unit price','Extension']],body,columnStyles:{0:{halign:'right',cellWidth:30},1:{halign:'right',cellWidth:44},2:{cellWidth:44},4:{cellWidth:210},5:{cellWidth:70},6:{cellWidth:76}}});
+    yy=lastY()+12; doc.setFontSize(8); doc.setTextColor(70); doc.text(pt(`Quantities include ${state.waste.L}% lumber cull, ${state.waste.P}% panel and ${state.waste.E}% engineered waste. Dimensional lumber is #2 SYP, cut-optimized from 8'-20' stock. Please quote by line number and note any substitutions.`),MG+16,Math.min(yy,PH-MG-24)); doc.setTextColor(0);
+
+    // ---- structural schedule ----
+    newSheet('Structural schedule'); mark('Structural schedule');
+    head('ROOF TRUSSES',MG+16,MG+34);
+    table('Structural schedule',{startY:MG+42,head:[['Mark','Qty','Type','Span','Pitch','Heel','Bearing','Spacing / overhang']],body:[
+      ['T1',String(STATS.trusses),'Asymmetrical scissor (vaulted loft)',"26'-0\" out-to-out","4/12 rear · 8/12 front",`${num(HEEL_R*12,2)}" rear · ${num(HEEL_F*12,2)}" front`,`Rear plate ${ftin(PLATE2B)} · knee plate ${ftin(PLATE2F)}`,'24" o.c. · 12" eaves; gable ends framed as raked walls with 12" ladder overhang']].map(r=>r.map(pt))});
+    const ft=new Map(); for(const m of M) if(m.cat==='Floor trusses'&&m.mode==='lfx'){ const k=ftin(m.len); ft.set(k,(ft.get(k)||0)+1); }
+    if(ft.size){ yy=lastY()+20; head('FLOOR TRUSSES',MG+16,yy); table('Structural schedule',{startY:yy+8,head:[['Qty','Length','Type','Spacing','Notes']],body:[...ft].map(([k,q])=>[String(q),k,STATS.joistName,`${STATS.joistOC}" o.c.`,'Top-flange hung from flush beam B1 where noted; strongbacks @ 10\' max; duct chase at mid-span'].map(pt))}); }
+    const beams=new Map(); for(const m of M) if((m.cat==='Beam'||m.cat==='Posts')&&m.sku){ const k=m.label.split(' · ').slice(0,2).join(' · '); const e=beams.get(k)||{n:0,lf:0,len:new Set()}; e.n++; e.lf+=m.len; e.len.add(ftin(m.len)); beams.set(k,e); }
+    yy=lastY()+20; head('BEAMS, COLUMNS & POSTS',MG+16,yy);
+    table('Structural schedule',{startY:yy+8,head:[['Member','Pieces','Lengths','Total LF','Check']],body:[...beams].map(([k,e])=>{ const chk=/Porch beam/.test(k)?(STATS.porchBeam.ok?'OK (simplified)':'Verify'):/Patio beam/.test(k)?(STATS.patioBeam.ok?'OK (simplified)':'Verify'):/B1/.test(k)?'Verify with LVL software':'—'; return [pt(k),String(e.n),[...e.len].join(', '),num(e.lf,1),chk]; })});
+    const hd=new Map(); for(const o of OPEN_REC){ const nj=o.ro>6?2:1, L=ftin(o.ro+2*nj*1.5*IN), k=o.hdr.label+'|'+L; const e=hd.get(k)||{size:o.hdr.label,len:L,n:0,where:[]}; e.n++; e.where.push(o.label.split(' ')[0]); hd.set(k,e); }
+    yy=lastY()+20; head('HEADERS',MG+16,yy);
+    table('Structural schedule',{startY:yy+8,head:[['Header','Length','Qty','Openings']],body:[...hd.values()].sort((a,b)=>a.size.localeCompare(b.size)).map(e=>[e.size,e.len,String(e.n),[...new Set(e.where)].join(', ')].map(pt))});
+    yy=lastY()+20; head('CONNECTORS & FASTENERS',MG+16,yy);
+    table('Structural schedule',{startY:yy+8,head:[['Qty','Unit','Item','Purpose']],body:COST.layers.hardware.lines.map(l=>[num(l.qty),l.unit,pt(l.desc),pt(M.find(m=>m.sku===l.sku&&m.layer==='hardware')?.label||'')])});
+
+    // ---- walls, sheathing & items to verify ----
+    newSheet('Wall & sheathing schedule · items to verify'); mark('Wall & sheathing schedule · items to verify');
+    head('WALL SCHEDULE',MG+16,MG+34);
+    table('Wall & sheathing schedule',{startY:MG+42,head:[['ID','Wall','Level','Framing','Length','Plate height','Openings','Bearing','Sheathed']],body:WALLS.map(w=>[w.id,w.name,w.base>1?'2':'1',`${w.size} @ ${(w.ext&&w.size==='2x6')?state.extOC:16}" o.c.`,ftin(w.to-w.from),typeof w.top==='function'?'Raked':ftin(w.top-w.base)+' wall',String((w.openings||[]).length),w.bearing,w.sheath?'7/16" OSB':'—'].map(pt))});
+    const sheet=COST.layers.wsheath.lines.concat(COST.layers.rsheath.lines, COST.layers.floor.lines.filter(l=>l.unit==='sheets'), COST.layers.drywall.lines);
+    yy=lastY()+20; head('SHEATHING, SUBFLOOR & DRYWALL',MG+16,yy);
+    table('Wall & sheathing schedule',{startY:yy+8,head:[['Qty','Unit','Item','In package total']],body:sheet.map(l=>[num(l.qty),l.unit,pt(l.desc),(l.sku==='GWB-12'?state.layers.drywall.inc:true)?'Yes':'No'])});
+    const warns=buildChecks().filter(c=>c.st==='warn');
+    yy=lastY()+20; head('ITEMS TO VERIFY BEFORE QUOTING',MG+16,yy);
+    table('Wall & sheathing schedule',{startY:yy+8,head:[['#','Item','Detail']],body:warns.map((c,i)=>[String(i+1),strip(c.title),strip(c.detail)]),columnStyles:{0:{cellWidth:22},1:{cellWidth:200}}});
+
+    // sheet index on the cover, now that the sheet numbers are known
+    { const n=doc.internal.getNumberOfPages(); const rows=[['F-1','Cover · project data & package summary']];
+      sections.forEach(([pg,t],i)=>{ const end=(i<sections.length-1?sections[i+1][0]:n+1)-1; rows.push([end>pg?`F-${pg} to F-${end}`:`F-${pg}`,pt(t)]); });
+      doc.setPage(1); doc.autoTable({startY:idxY+6,theme:'grid',tableWidth:480,margin:{left:MG+16},styles:{fontSize:7.6,cellPadding:3,lineColor:[150,150,150],lineWidth:0.4,textColor:20},headStyles:{fillColor:[45,45,45],textColor:255},head:[['Sheet','Title']],body:rows.map(r=>r.map(pt)),columnStyles:{0:{cellWidth:80}}});
+      doc.setPage(n); }
+    // ---- save ----
+    const blob=doc.output('blob'), filename=`Bastine-House-LBM-quote-set-${new Date().toISOString().slice(0,10)}.pdf`;
+    msg.textContent=`${doc.internal.getNumberOfPages()} sheets ready…`;
+    const dl = window.claude?.use ? await Promise.race([window.claude.use('downloads'), new Promise(r=>setTimeout(()=>r(null),4000))]).catch(()=>null) : null;
+    if(dl){ try{ await dl.save({filename,data:blob}); msg.textContent=`Saved ${filename}`; }
+            catch(e){ msg.textContent = e?.code==='declined' ? 'Save cancelled.' : e?.code==='rate_limited' ? 'A save prompt is already open.' : 'Saving isn\'t available in this view.'; } }
+    else { doc.save(filename); msg.textContent=`Downloaded ${filename}`; }
+  } catch(e){ console.error(e); msg.textContent=(e&&e.message)?e.message:'Export failed.'; }
+  finally{ btn.disabled=false; if(state.view!=='3d') renderPlan(); }
+}
+document.getElementById('b-pdf').addEventListener('click',exportPdfSet);
+
+function loop(now){ requestAnimationFrame(loop); stepAnim(now); if(!anim) controls.update(); renderer.render(scene,cam); updateCube(); updateLabels(); updateMeasLabels(); }
+
+/* =====================================================================
+   9. PANEL UI
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const EYE_ON='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>';
+const EYE_OFF='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2l12 12M6.5 3.3A7 7 0 0 1 8 3c4.5 0 7 5 7 5a12 12 0 0 1-2 2.6M4 4.9C2.2 6.1 1 8 1 8s2.5 5 7 5a6.6 6.6 0 0 0 3-.7"/></svg>';
+const CHEV='<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg>';
+function measureText(L,c){ const m=c.meas; switch(L.basis){ case 'LF wall': return `${num(m)} LF of wall`; case 'sq ft': return `${num(m)} sf framed deck`; case 'truss': return `${m} trusses @ 24" o.c.`; case 'sq ft roof': return `${num(m)} sf of roof`; case 'sheet': return `${num(m)} sheets`; case 'piece': return `${num(m)} pieces`; case 'item': return `${num(m)} items · visual only, not priced`; } }
+function linesTable(lines){ if(!lines.length) return '<p class="note">No priced items.</p>';
+  return `<div class="tw"><table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Unit</th><th class="n">Ext.</th></tr></thead><tbody>${lines.map(l=>`<tr><td>${esc(l.desc)}<small>${esc(l.uses)}</small></td><td class="n">${num(l.qty)} ${l.unit}</td><td class="n">${money2(l.uc)}</td><td class="n">${money(l.cost)}</td></tr>`).join('')}</tbody></table></div>`; }
+
+function renderLayers(){
+  const c=COST;
+  const stack=LAYERS.filter(L=>state.layers[L.id].inc && c.layers[L.id].total>0).map(L=>`<i style="width:${c.layers[L.id].total/(c.mat||1)*100}%;background:${L.color}" title="${esc(L.name)}"></i>`).join('');
+  $('#tab-layers').innerHTML=`
+   <div class="card"><h3>Framing options</h3><div class="opts">
+     <label class="opt" for="o-oc">Exterior studs<select id="o-oc"><option value="16">2x6 @ 16" o.c.</option><option value="24">2x6 @ 24" o.c. (advanced framing)</option></select></label>
+     <label class="opt" for="o-j">2nd floor system<select id="o-j"><option value="ft">12" open-web floor truss @ 24"</option><option value="ft16">16" floor truss @ 24" (trunk chase)</option><option value="ij">11-7/8" I-joist @ 16"</option><option value="syp">2x12 #2 SYP @ 16"</option></select></label>
+     <label class="opt" for="o-g">Dimensions<select id="o-g"><option value="resolved">Resolved</option><option value="drawn">As drawn</option></select></label>
+     <label class="opt" for="o-s">Opening layout<select id="o-s"><option value="1">Align to stud layout (≤ 4")</option><option value="0">Keep drawn locations</option></select></label>
+     <label class="opt" for="o-c">Cut list<select id="o-c"><option value="1">Optimized cutting</option><option value="0">Simple 16' nesting</option></select></label>
+     <label class="opt" for="o-pp">Porch posts<select id="o-pp"><option value="4">4 posts, as drawn</option><option value="5">5 posts (one added in the long bay)</option></select></label>
+     <label class="opt" for="o-tp">Patio posts<select id="o-tp"><option value="2">Corner + mid post</option><option value="1">Corner post only, as drawn</option></select></label>
+     <label class="opt" for="o-st">Stair<select id="o-st"><option value="land2">1 step + landing step</option><option value="land1">Landing as the only step</option><option value="land6">6 steps + landing</option></select></label>
+     <label class="opt" for="o-bd">Bedroom depth<select id="o-bd"><option value="11">11'-0" clear (owner sketch)</option><option value="10">10'-0" clear</option><option value="0">As drawn</option></select></label>
+     <label class="opt" for="o-h">Headers<select id="o-h"><option value="auto">Built-up SYP, sized by span</option><option value="std">Built-up SYP, deepest that fits</option><option value="lvl">LVL headers</option></select></label>
+   </div></div>
+   <div class="card"><h3>Package summary</h3>
+     <div class="sum"><span>Lumber, trusses, panels & hardware (${state.market===1?'SE average':'×'+state.market.toFixed(2)})</span><b data-k="mat">${money(c.mat)}</b>
+     <span>Sales tax ${state.tax}% on material</span><b data-k="tax">${money(c.tax)}</b>
+     <span>Delivery</span><b>${money(c.mat>0?state.delivery:0)}</b>
+     <span class="t">Package total</span><b data-k="tot">${money(c.total)}</b></div>
+     <div class="stack" aria-hidden="true">${stack}</div>
+     <p class="note">Bar shows each included layer's share of material.</p></div>
+   ${LAYERS.map(L=>{ const lc=c.layers[L.id], st=state.layers[L.id], open=state.open.has(L.id);
+     return `<div class="layer${st.inc?'':' off'}" data-id="${L.id}">
+      <div class="lh">
+        ${L.novis?'<span></span>':`<button class="eye" aria-pressed="${st.vis}" aria-label="Show ${esc(L.name)} in 3D" data-act="vis">${st.vis?EYE_ON:EYE_OFF}</button>`}
+        <span class="sw" style="background:${L.color}"></span>
+        <div class="ln"><b>${esc(L.name)}</b><small>${measureText(L,lc)}</small></div>
+        <label class="inc" title="Include in package total"><input type="checkbox" data-act="inc" ${st.inc?'checked':''} aria-label="Include ${esc(L.name)} in total"></label>
+        <div class="lc" data-cost="${L.id}">${money(lc.total)}</div>
+        <button class="chev" aria-expanded="${open}" aria-label="Details" data-act="open">${CHEV}</button>
+      </div>
+      <div class="lb" ${open?'':'hidden'}>
+        ${linesTable(lc.lines)}
+      </div></div>`; }).join('')}
+   <p class="note">Quantities include ${state.waste.L}% lumber cull allowance, ${state.waste.P}% panels, ${state.waste.E}% engineered. ${state.cutopt?`Dimensional lumber is cut-optimized (${num((COST.yield||0)*100,1)}% yield).`:'Short cuts are nested from 16-foot stock.'}</p>`;
+  $('#o-bd').value=String(state.bedClear||0); $('#o-st').value=state.stair; $('#o-pp').value=String(state.porchPosts); $('#o-tp').value=String(state.patioPosts); $('#o-g').value=state.geo; $('#o-s').value=state.snap?'1':'0'; $('#o-c').value=state.cutopt?'1':'0'; $('#o-oc').value=String(state.extOC); $('#o-j').value=state.joist; $('#o-h').value=state.header;
+}
+$('#tab-layers').addEventListener('change',e=>{
+  const id=e.target.id;
+  if(id==='o-oc'){ state.extOC=+e.target.value; rebuild(); return; }
+  if(id==='o-j'){ state.joist=e.target.value; rebuild(); return; }
+  if(id==='o-h'){ state.header=e.target.value; rebuild(); return; }
+  if(id==='o-g'){ state.geo=e.target.value; rebuild(); return; }
+  if(id==='o-pp'){ state.porchPosts=+e.target.value; rebuild(); return; }
+  if(id==='o-st'){ state.stair=e.target.value; rebuild(); return; }
+  if(id==='o-bd'){ state.bedClear=+e.target.value; rebuild(); return; }
+  if(id==='o-tp'){ state.patioPosts=+e.target.value; rebuild(); return; }
+  if(id==='o-s'){ state.snap=e.target.value==='1'; rebuild(); return; }
+  if(id==='o-c'){ state.cutopt=e.target.value==='1'; rebuild(); return; }
+  const lay=e.target.closest('.layer'); if(!lay) return;
+  if(e.target.dataset.act==='inc'){ state.layers[lay.dataset.id].inc=e.target.checked; refreshCosts(true); }
+});
+$('#tab-layers').addEventListener('click',e=>{ const b=e.target.closest('button[data-act]'); if(!b) return; const lay=b.closest('.layer'), id=lay.dataset.id;
+  if(b.dataset.act==='vis'){ const st=state.layers[id]; st.vis=!st.vis; b.setAttribute('aria-pressed',st.vis); b.innerHTML=st.vis?EYE_ON:EYE_OFF; applyVisibility(); renderPlan(); if(selected&&!selected.parent.visible) select(null); }
+  if(b.dataset.act==='open'){ const open=!state.open.has(id); open?state.open.add(id):state.open.delete(id); b.setAttribute('aria-expanded',open); lay.querySelector('.lb').hidden=!open; } });
+
+function takeoffAll(){ const map=new Map();
+  for(const L of LAYERS){ if(!state.layers[L.id].inc) continue; for(const l of COST.layers[L.id].lines){ const k=l.desc.replace(/ \(cut list.*\)| \(\d[\d,]* sf\)/,'')+'|'+l.sku+'|'+l.unit+'|'+l.uc.toFixed(4);
+      const e=map.get(k)||{...l,desc:l.desc.replace(/ \(cut list.*\)| \(\d[\d,]* sf\)/,''),qty:0,cost:0,bf:0,layers:new Set()}; e.qty+=l.qty; e.cost+=l.cost; e.bf+=l.bf; e.layers.add(L.name.split(' · ')[0].replace('Main Roof','Roof')); map.set(k,e); } }
+  return [...map.values()]; }
+function renderTakeoff(){
+  const all=takeoffAll(); const byCat={}; for(const l of all)(byCat[l.cat]=byCat[l.cat]||[]).push(l);
+  const bfTot=all.reduce((s,l)=>s+l.bf,0);
+  $('#tab-takeoff').innerHTML=`<div class="card"><div class="grp"><h3>Lumber package by type</h3><button class="btn" id="csv">Copy CSV</button></div>
+     <div class="sum"><span>Dimensional + PT lumber</span><b>${num(bfTot)} BF</b><span>Material subtotal</span><b>${money(COST.mat)}</b></div></div>
+   ${CAT_ORDER.filter(c=>byCat[c]).map(cat=>{ const ls=byCat[cat].sort((a,b)=>b.cost-a.cost); const sub=ls.reduce((s,l)=>s+l.cost,0); const bf=ls.reduce((s,l)=>s+l.bf,0);
+     return `<div class="card"><div class="grp"><h3>${cat}</h3><span>${bf?num(bf)+' BF · ':''}${money(sub)}</span></div><div class="tw"><table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Ext.</th></tr></thead><tbody>
+      ${ls.map(l=>`<tr><td>${esc(l.desc)}<small>${esc([...l.layers].join(' · '))}</small></td><td class="n">${num(l.qty)} ${l.unit}</td><td class="n">${money(l.cost)}</td></tr>`).join('')}</tbody></table></div></div>`; }).join('')}
+   <p class="note" id="csv-msg">Totals reflect included layers only. Toggle layers on the Layers tab.</p>`;
+  $('#csv').onclick=async()=>{ const rows=[['Category','Item','Qty','Unit','Unit cost','Extended','Layers']]; for(const cat of CAT_ORDER) for(const l of (byCat[cat]||[])) rows.push([cat,l.desc,l.qty,l.unit,l.uc.toFixed(2),l.cost.toFixed(2),[...l.layers].join('; ')]);
+    const txt=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    try{ await navigator.clipboard.writeText(txt); $('#csv-msg').textContent='Copied takeoff CSV to the clipboard.'; }catch{ $('#csv-msg').textContent='Clipboard blocked here. Select the tables above and copy them manually.'; } };
+}
+
+function renderPrices(){
+  const byCat={}; for(const [k,v] of Object.entries(PB))(byCat[v.cat]=byCat[v.cat]||[]).push([k,v]);
+  $('#tab-prices').innerHTML=`<div class="card"><h3>Market & job settings</h3><div class="opts">
+      <label class="opt" for="p-mkt">Market adjust<span class="row"><input type="range" id="p-mkt" min="0.8" max="1.25" step="0.01" value="${state.market}"><b id="p-mktv" style="font-family:var(--mono);font-size:12px">×${state.market.toFixed(2)}</b></span></label>
+      <label class="opt" for="p-tax">Sales tax %<input type="number" id="p-tax" step="0.25" min="0" value="${state.tax}"></label>
+      <label class="opt" for="p-del">Delivery $<input type="number" id="p-del" step="5" min="0" value="${state.delivery}"></label>
+    </div></div>
+    <div class="card"><h3>Waste factors %</h3><div class="pb">
+      <label for="w-L">Lumber cull & breakage</label><input type="number" id="w-L" data-w="L" min="0" step="1" value="${state.waste.L}">
+      <label for="w-E">Engineered (LVL, I-joist, rim)</label><input type="number" id="w-E" data-w="E" min="0" step="1" value="${state.waste.E}">
+      <label for="w-P">Sheathing & subfloor</label><input type="number" id="w-P" data-w="P" min="0" step="1" value="${state.waste.P}">
+      <label for="w-H">Connectors & fasteners</label><input type="number" id="w-H" data-w="H" min="0" step="1" value="${state.waste.H}">
+    </div></div>
+    ${CAT_ORDER.map(cat=>`<div class="card"><h3>${cat}</h3><div class="pb">${byCat[cat].map(([k,v])=>`<label for="pr-${k}">${esc(v.name)}<small>/${v.unit}</small></label><input type="number" id="pr-${k}" data-sku="${k}" min="0" step="0.01" value="${state.prices[k]}">`).join('')}</div></div>`).join('')}
+    <div class="row"><button class="btn" id="p-reset">Reset to SE averages</button></div>
+    <p class="note">Defaults are Southeast (GA/FL/AL/Carolinas/TN) average contractor-yard prices for Q4 2026. They are estimates; replace them with your supplier quote and truss quote.</p>`;
+}
+$('#tab-prices').addEventListener('input',e=>{ const t=e.target; const v=parseFloat(t.value);
+  if(t.dataset.sku){ if(v>=0){ state.prices[t.dataset.sku]=v; refreshCosts(); } return; }
+  if(t.dataset.w){ if(v>=0){ state.waste[t.dataset.w]=v; refreshCosts(); } return; }
+  if(t.id==='p-mkt'){ state.market=v; $('#p-mktv').textContent='×'+v.toFixed(2); refreshCosts(); }
+  if(t.id==='p-tax'&&v>=0){ state.tax=v; refreshCosts(); }
+  if(t.id==='p-del'&&v>=0){ state.delivery=v; refreshCosts(); } });
+$('#tab-prices').addEventListener('click',e=>{ if(e.target.id!=='p-reset') return; for(const [k,v] of Object.entries(PB)) state.prices[k]=v.price; state.waste={...DEFAULT_WASTE}; state.market=1; state.tax=7; state.delivery=195; renderPrices(); refreshCosts(); });
+
+function renderChecks(){
+  const C=buildChecks(); const cnt={ok:0,warn:0,info:0,fix:0}; C.forEach(c=>cnt[c.st]++);
+  const secs=[...new Set(C.map(c=>c.sec))];
+  $('#tab-checks').innerHTML=`<div class="card"><h3>Drawing & framing validation</h3><div class="chips"><span class="pill ok">${cnt.ok} pass</span><span class="pill warn">${cnt.warn} review</span>${cnt.fix?`<span class="pill fix">${cnt.fix} resolved</span>`:''}<span class="pill info">${cnt.info} note</span></div>
+     <p class="note" style="margin-top:8px">Dimension strings are summed against overall dimensions from A-1/A-2; elevations from A-3–A-6; pitches from A-9. ${state.geo==='resolved'?'Resolved mode closes each string.':'Showing the drawings as dimensioned.'} Header and span checks use simplified IRC tables for #2 SYP and are not a substitute for engineering.</p></div>
+   ${secs.map(s=>{ const items=C.filter(c=>c.sec===s); const w=items.filter(c=>c.st==='warn').length;
+     return `<div class="card"><div class="grp"><h3>${s}</h3><span>${w?w+' to review':'all clear'}</span></div>${items.map(c=>`<div class="chk"><span class="pill ${c.st}">${{ok:'pass',warn:'review',info:'note',fix:'resolved'}[c.st]}</span><div><b>${c.title}</b><p>${c.detail}</p></div></div>`).join('')}</div>`; }).join('')}`;
+  const b=$('#chk-badge'); b.textContent=cnt.warn; b.hidden=!cnt.warn;
+}
+
+function updateKPIs(){ $('#k-mat').textContent=money(COST.mat); $('#k-bf').textContent=num(COST.bf)+' BF'; $('#k-tot').textContent=money(COST.total); $('#k-psf').textContent=money2(COST.total/COST.area); }
+function refreshCosts(){ recalc(); updateKPIs(); renderLayers(); renderTakeoff(); renderChecks(); }
+function scenario(over){ const bak={geo:state.geo,snap:state.snap,cutopt:state.cutopt}; Object.assign(state,over); buildModel(); const c=recalc(); Object.assign(state,bak); return {mat:c.mat,pcs:c.pcs,bf:c.bf}; }
+function rebuild(){
+  SCEN={ base:scenario({geo:'drawn',snap:false,cutopt:false}), noOpt:scenario({cutopt:false}), drawn:scenario({geo:'drawn'}), noSnap:scenario({snap:false}) };
+  buildModel(); buildScene(); recalc(); buildDims(); updateKPIs(); renderLayers(); renderTakeoff(); renderChecks(); renderPlan(); }
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t?'true':'false'));
+  for(const id of ['layers','takeoff','prices','checks']) document.getElementById('tab-'+id).hidden = id!==t.dataset.tab; }));
+document.querySelectorAll('.vb[data-v]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
+$('#b-ortho').addEventListener('click',()=>setOrtho(!state.ortho));
+$('#b-dims').addEventListener('click',e=>{ state.dims=!state.dims; e.currentTarget.setAttribute('aria-pressed',state.dims); dimsGroup.visible=state.dims; labelsEl.hidden=!state.dims; });
+$('#b-fit').addEventListener('click',()=>setView('iso'));
+$('#explode').addEventListener('input',e=>{ state.explode=+e.target.value; applyExplode(); });
+
+rebuild(); renderPrices(); requestAnimationFrame(loop);
+window.__app={state,COST:()=>COST,M:()=>M,cam:()=>cam,controls,setView,renderer,THREE,setOrtho};
+</script>
+
+</body>
+</html>
